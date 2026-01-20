@@ -47,32 +47,33 @@ class npm_journalist:
     officer=self.officer
     subject=self.subject
     body=self.body
-    llm=Ollama(
-        model="llama3.2",
-        temperature="0.2"
-    )
+    return self._send_email(officer,subject,body)
+    #llm=Ollama(
+        #model="llama3.2",
+        #temperature="0.2"
+    #)
 
-    prompt=f"""
-    Hello you are an AI assistant which review the emails and just respond Yes or No by considering following conditions:-
-    1.Any Offensive word is here or such sign
-    2.Any threat here to the respected officer he is sending the complain like in this email he is sending to {officer}
+    #prompt=f"""
+    #Hello you are an AI assistant which review the emails and just respond Yes or No by considering following conditions:-
+    #1.Any Offensive word is here or such sign
+    #2.Any threat here to the respected officer he is sending the complain like in this email he is sending to {officer}
 
-    now see these conditions in this email:-
-    Subject:- {subject}
-    Complain:- {body}
+    #now see these conditions in this email:-
+    #Subject:- {subject}
+    #Complain:- {body}
 
-    and please respond just "Yes" if you think the above conditions does not apply in the email and if apply then just write "No" nothing else of it no responmse to instruction or
-    anything, even you think that half it is correct but half not again say "No" when you are sure that this email do not violate the above conditons then only say "Yes"
-    """
+    #and please respond just "Yes" if you think the above conditions does not apply in the email and if apply then just write "No" nothing else of it no responmse to instruction or
+    #anything, even you think that half it is correct but half not again say "No" when you are sure that this email do not violate the above conditons then only say "Yes"
+    #"""
 
-    response=llm.invoke(prompt)
+    #response=llm.invoke(prompt)
 
-    if response=="Yes":
-      return self._send_email(officer,subject,body)
-    else:
-      return """
-      Sorry your email contains some elements which violates rules please identify them and correct them possible reason:-
-      1.Any offensive word or sign
-      2.Any threat or message seems threat
-      """
+    #if response=="Yes":
+      #return self._send_email(officer,subject,body)
+    #else:
+      #return """
+      #Sorry your email contains some elements which violates rules please identify them and correct them possible reason:-
+      #1.Any offensive word or sign
+      #2.Any threat or message seems threat
+      #"""
 
