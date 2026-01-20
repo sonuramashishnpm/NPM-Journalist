@@ -13,12 +13,10 @@ def data():
   officer=data.get("officer","")
   subject=data.get("subject","")
   body=data.get("body","")
-  filepath=data.get("filepath","")
 
   npm=npm_journalist(
       officer=officer,
       subject=subject,
       body=body,
-      filepath=filepath
   )
   npm.npmai()
