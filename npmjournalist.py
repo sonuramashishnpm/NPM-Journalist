@@ -11,7 +11,19 @@ class npm_journalist:
     self.officer=officer
     self.subject=subject
     self.body=body
-
+  
+  def gmail_auth():
+    if os.path.exists("token.json"):
+        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+    else:
+        flow = InstalledAppFlow.from_client_secrets_file(
+            "credentials.json", SCOPES
+        )
+        creds = flow.run_local_server(port=0)
+        with open("token.json", "w") as f:
+            f.write(creds.to_json())
+    return build("gmail", "v1", credentials=creds)
+  
   def _send_email(self,to, subject, body):
     off_emails={
       "Kota_DM":"dm-kot-rj@nic.in",
@@ -25,10 +37,8 @@ class npm_journalist:
       "Patna_SP":"spcity-patna-bih@nic.in",
       "Sonu":"sonukumarviral123@gmail.com",
     }
-    SCOPES = ["https://www.googleapis.com/auth/gmail.send",]
     
-    creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    gmail=build("gmail", "v1", credentials=creds)
+    gmail=gmail_auth()
     
     message = MIMEText(body)
     message["to"] = to
