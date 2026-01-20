@@ -35,7 +35,7 @@ class npm_journalist:
 
     raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
 
-    return gmail.users().messages().send(
+    return creds.users().messages().send(
         userId="me",
         body={"raw": raw}
     ).execute()
