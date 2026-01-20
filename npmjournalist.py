@@ -42,7 +42,7 @@ class npm_journalist:
     gmail= self.gmail_auth()
     
     message = MIMEText(body)
-    message["to"] = to
+    message["to"] = off_emails[to]
     message["subject"] = subject
 
     raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
