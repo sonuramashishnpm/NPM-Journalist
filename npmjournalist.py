@@ -18,8 +18,16 @@ class npm_journalist:
     USER = "sonuramashishnpm@gmail.com"
     PASS = "hpfj raoj iqel canu"
     off_emails={
-        "Kota_DM":"kotadm@gmail.com",
-        "Rajasthan_CM":"rajasthancm@gmail.com"
+      "Kota_DM":"dm-kot-rj@nic.in",
+      "Rajasthan_CM":"cmrajasthan@nic.in",
+      "Bihar_CM":"cmbihar@nic.in",
+      "Delhi_CM":"cmdelhi@nic.in",
+      "Patna_DM":"dm-patna-bih@nic.in",
+      "Nalanda_DM":"dm-nalanda-bih@nic.in",
+      "Kota_SP":"pcr.kotacity@rajpolice.gov.in",
+      "Nalanda_SP":"sp-nalanda-bih@nic.in",
+      "Patna_SP":"spcity-patna-bih@nic.in",
+      "Sonu":"sonukumarviral123@gmail.com",
     }
     msg = MIMEMultipart()
     msg["to"] = off_emails[to]
