@@ -7,7 +7,7 @@ app= Flask(__name__)
 def home():
   return render_template("index.html")
 
-@app.route("/sendcomplain",methods=["POST"])
+@app.route("/send_complain",methods=["POST"])
 def data():
   data=request.get_json()
   officer=data.get("officer","")
