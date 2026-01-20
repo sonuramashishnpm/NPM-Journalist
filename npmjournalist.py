@@ -9,14 +9,12 @@ import base64
 import os
 
 class npm_journalist:
-  def __init__(self,officer,subject,body,filepath=None):
+  def __init__(self,officer,subject,body):
     self.officer=officer
     self.subject=subject
     self.body=body
-    self.filepath=filepath
 
-  def _send_email(self,to, subject, body,filepath=None):
-    self.filepath=filepath
+  def _send_email(self,to, subject, body):
     USER = "sonuramashishnpm@gmail.com"
     PASS = "hpfj raoj iqel canu"
     off_emails={
@@ -29,15 +27,15 @@ class npm_journalist:
 
     msg.attach(MIMEText(body))
 
-    if filepath and os.path.exists(filepath):
-      filename = os.path.basename(filepath)
-      attachment = MIMEBase("application", "octet-stream")
-      attachment.set_payload(open(filepath, "rb").read())
-      encoders.encode_base64(attachment)
-      attachment.add_header("Content-Disposition", f"attachment; filename={filename}")
-      msg.attach(attachment)
-    else:
-      pass
+    #if filepath and os.path.exists(filepath):
+      #filename = os.path.basename(filepath)
+      #attachment = MIMEBase("application", "octet-stream")
+      #attachment.set_payload(open(filepath, "rb").read())
+      #encoders.encode_base64(attachment)
+      #attachment.add_header("Content-Disposition", f"attachment; filename={filename}")
+      #msg.attach(attachment)
+    #else:
+      #pass
 
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
@@ -70,7 +68,7 @@ class npm_journalist:
     response=llm.invoke(prompt)
 
     if response=="Yes":
-      return self._send_email(officer,subject,body,filepath=None)
+      return self._send_email(officer,subject,body)
     else:
       return """
       Sorry your email contains some elements which violates rules please identify them and correct them possible reason:-
