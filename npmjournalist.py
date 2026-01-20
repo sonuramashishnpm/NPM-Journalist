@@ -38,7 +38,7 @@ class npm_journalist:
       "Sonu":"sonukumarviral123@gmail.com",
     }
     
-    gmail=gmail_auth()
+    gmail= self.gmail_auth()
     
     message = MIMEText(body)
     message["to"] = to
