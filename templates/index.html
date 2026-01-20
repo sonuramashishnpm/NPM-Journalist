@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPM Journalist</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #dc2626; /* Red */
+            --secondary-color: #ffffff; /* White */
+            --accent1: #f3f4f6; /* Light gray */
+            --accent2: #1f2937; /* Dark gray */
+            --text-primary: #000000;
+            --text-secondary: #6b7280;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+        }
+        [data-theme="dark"] {
+            --accent1: #111827;
+            --accent2: #374151;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+        }
+        /* --- Background video & overlay --- */
+        #background-video {
+            position: fixed;
+            inset: 0; /* top:0; right:0; bottom:0; left:0 */
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -2; /* BACKMOST */
+            pointer-events: none;
+            
+        }
+
+    #video-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 10, 30, 0.6); /* semi-transparent overlay */
+        z-index: -1; /* Just above video */
+        pointer-events: none;
+        
+    }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            line-height: 1.6;
+        }
+        header {
+            background-color: var(--bg-primary); /* White BG */
+            color: var(--primary-color); /* Red text */
+            padding: 1rem 2rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        nav {
+            display: flex;
+            gap: 1rem;
+        }
+        nav button {
+            background: red;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            color: var(--text-primary);
+        }
+        nav button:hover, nav button.active {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+        main {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        section {
+            display: none;
+        }
+        section.active {
+            display: block;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 1rem;
+            font-size: 1rem;
+            border: 1px solid var(--text-secondary);
+            border-radius: 8px;
+            resize: vertical;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            box-sizing: border-box;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        #subject{
+            width: 100%;
+            height: 50px;
+            padding: 1rem;
+            font-size: 1rem;
+            border: 1px solid var(--text-secondary);
+            border-radius: 8px;
+            resize: vertical;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            box-sizing: border-box;
+        }
+        #subject:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid var(--text-secondary);
+            border-radius: 8px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            box-sizing: border-box;
+        }
+        .send-btn {
+            padding: 0.75rem 2rem;
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s ease;
+        }
+        .send-btn:hover {
+            transform: translateY(-2px);
+        }
+        #response {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background-color: var(--accent1);
+        }
+        /* About Us */
+        .about-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+        .aside-nav {
+            background-color: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--text-secondary);
+        }
+        .aside-nav h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        .aside-nav ul {
+            list-style: none;
+            padding: 0;
+        }
+        .aside-nav li {
+            margin-bottom: 0.5rem;
+        }
+        .aside-nav a {
+            text-decoration: none;
+            color: var(--text-primary);
+            display: block;
+            padding: 0.5rem 0;
+            transition: color 0.3s ease;
+        }
+        .aside-nav a:hover, .aside-nav a.active {
+            color: var(--primary-color);
+        }
+        .about-content {
+            background-color: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--text-secondary);
+        }
+        .about-content h2 {
+            color: var(--primary-color);
+        }
+        .topic {
+            display: none;
+        }
+        .topic.active {
+            display: block;
+        }
+        /* Developer Section - Forced visible, no hiding */
+        .developer-section {
+            margin-top: 3rem !important;
+            padding: 2rem;
+            background-color: var(--bg-secondary) !important;
+            border: 2px solid var(--primary-color) !important; /* Red border to make it pop */
+            border-radius: 12px;
+            display: block !important; /* Always show */
+        }
+        .developer-section h2 {
+            text-align: center;
+            color: var(--primary-color) !important;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+        /* Profile styles - Simplified, no blur issues */
+        .profile-container {
+            max-width: 100%;
+            background: rgba(20, 20, 40, 0.8) !important; /* Solid BG */
+            border: 1px solid #1ed760;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            color: white;
+        }
+        .profile-banner {
+            background: linear-gradient(135deg, rgba(30, 215, 96, 0.2), transparent);
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .profile-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 2rem;
+            padding: 2rem;
+            flex-wrap: wrap;
+        }
+        .profile-img {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid #1ed760;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .profile-intro h2 {
+            font-size: 2.5rem;
+            margin-bottom: 0.8rem;
+            color: white;
+        }
+        .highlight { color: #1ed760; }
+        .tagline {
+            color: #ddd;
+            font-style: italic;
+            margin-bottom: 1rem;
+        }
+        .social-badges {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin: 2rem 0;
+        }
+        .social-badges a {
+            background: #1ed760;
+            color: black;
+            padding: 0.8rem 1.6rem;
+            border-radius: 50px;
+            font-weight: bold;
+            text-decoration: none;
+            transition: transform 0.3s;
+        }
+        .social-badges a:hover { transform: scale(1.05); }
+        .divider {
+            border-top: 1px solid rgba(30,215,96,0.5);
+            margin: 2rem 0;
+        }
+        .profile-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 0 2rem 2rem;
+        }
+        .detail-box h3 { color: #1ed760; margin-bottom: 1rem; }
+        .detail-box h4 { color: #ddd; margin-bottom: 0.5rem; }
+        .detail-box p { color: #ccc; }
+        .full-width-box {
+            grid-column: 1 / -1;
+            background: rgba(30, 215, 96, 0.1);
+            padding: 2rem;
+            border-radius: 12px;
+            border-left: 4px solid #1ed760;
+        }
+        .repo-list { display: grid; gap: 1rem; }
+        .repo-item {
+            padding: 1rem;
+            background: rgba(0,0,0,0.5);
+            border-radius: 8px;
+            border-left: 3px solid #1ed760;
+            color: white;
+        }
+        .stats-container {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+        .stats-container img { max-width: 45%; border-radius: 8px; }
+        .mantra-box {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(30, 215, 96, 0.1);
+            border-top: 1px solid #1ed760;
+        }
+        .mantra-box h2 { color: #1ed760; }
+        .mantra-box p { color: #eee; font-style: italic; }
+        blockquote {
+            color: #ccc;
+            border-left: 4px solid #1ed760;
+            padding-left: 1.5rem;
+            font-style: italic;
+            margin: 1rem 0;
+        }
+        /* Docs */
+        .docs-content {
+            background-color: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--text-secondary);
+        }
+        footer {
+            background-color: var(--bg-primary); /* White BG */
+            color: var(--primary-color); /* Red text */
+            text-align: center;
+            padding: 1rem;
+            margin-top: 3rem;
+        }
+        .theme-toggle {
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <video autoplay muted loop playsinline id="background-video" poster="" aria-hidden="true">
+    <source src="https://npmexplorer.netlify.app/NPM%20ai%20backgrond%20video.mp4" type="video/mp4">
+    <!-- fallback: decorative background -->
+  </video>
+  <div id="video-overlay" aria-hidden="true"></div>
+    <header>
+        <span>NPM Journalist</span>
+        <button class="theme-toggle" onclick="toggleTheme()">🌙 Toggle Theme</button>
+    </header>
+    <nav>
+        <button class="active" onclick="switchSection('send_complain')">Send Complaint</button>
+        <button onclick="switchSection('about_us')">About Us</button>
+        <button onclick="switchSection('docs')">Docs</button>
+    </nav>
+    <main>
+        <section id="send_complain_section" class="active">
+            <label for="officer">Select Officer / Post:</label>
+            <select id="officer">
+                <option value="Patna_DM">DM Patna</option>
+            </select>
+            <textarea id="subject" placeholder="Write a Subject or Titile of your complain"></textarea>
+            <textarea id="complaint_body" placeholder="Write your complaint here..."></textarea>
+            <button class="send-btn" onclick="sendComplaint()">Send</button>
+            <div id="response"></div>
+        </section>
+        <section id="about_us_section">
+            <div class="about-container">
+                <aside class="aside-nav">
+                    <h3>Topics</h3>
+                    <ul>
+                        <li><a href="#" class="active" onclick="showTopic('core-purpose', this)">Core Purpose</a></li>
+                        <li><a href="#" onclick="showTopic('not', this)">What it is NOT</a></li>
+                        <li><a href="#" onclick="showTopic('how', this)">How it Achieves This</a></li>
+                        <li><a href="#" onclick="showTopic('ux', this)">Frontend UX Vision</a></li>
+                        <li><a href="#" onclick="showTopic('revenue', this)">Revenue / Sustainability</a></li>
+                        <li><a href="#" onclick="showTopic('vision', this)">Core Vision Statement</a></li>
+                        <li><a href="#" onclick="scrollToDeveloper('developer-anchor',this)">👨‍💻 Meet Developer</a></li> <!-- New direct link -->
+                    </ul>
+                </aside>
+                <div class="about-content">
+                    <div id="core-purpose" class="topic active">
+                        <h2>1️⃣ Core Purpose</h2>
+                        <p>NPM_Journalist exists to:</p>
+                        <ul>
+                            <li>Enable citizens to safely send complaints or messages to government officers without fear of being traced or targeted.</li>
+                            <li>Provide ethical, responsible mediation so the message is safe, non-offensive, and constructive.</li>
+                            <li>Reduce the power asymmetry between ordinary users and authority figures.</li>
+                        </ul>
+                        <p><strong>The central promise:</strong> You can speak truth or file a complaint without fear, and your message will only go through if it’s safe and respectful.</p>
+                    </div>
+                    <div id="not" class="topic">
+                        <h2>2️⃣ What it is NOT</h2>
+                        <ul>
+                            <li>It’s not a paid service.</li>
+                            <li>It’s not a spam filter based on identity.</li>
+                            <li>It’s not a platform for monetizing complaints.</li>
+                            <li>It’s not a tool to bypass law or policy — it ensures civility and legality.</li>
+                        </ul>
+                    </div>
+                    <div id="how" class="topic">
+                        <h2>3️⃣ How it achieves this (technical vision)</h2>
+                        <ol>
+                            <li><strong>AI Validation</strong><ul><li>Validates complaint content.</li><li>Checks for offensive language or threats.</li><li>Responds Yes / No for safe delivery.</li></ul></li>
+                            <li><strong>Anonymity by design</strong><ul><li>No login, no payment, no identifiable tracking.</li><li>Only the complaint reaches the officer.</li></ul></li>
+                            <li><strong>Anti-spam without identity</strong><ul><li>One-shot submission.</li><li>Semantic similarity detection.</li><li>Officer-side quotas and reflective delays.</li><li>Cognitive friction for careful writing.</li></ul></li>
+                            <li><strong>Civic-first architecture</strong><ul><li>The platform never compromises user safety for revenue or convenience.</li><li>Focus on trust, integrity, and transparency.</li></ul></li>
+                        </ol>
+                    </div>
+                    <div id="ux" class="topic">
+                        <h2>4️⃣ Frontend / User Experience Vision</h2>
+                        <ul>
+                            <li>Minimal, clear UI with three sections: Send_Complain, About Us, Docs.</li>
+                            <li>Default to Send_Complain.</li>
+                            <li>Dropdown to select officer/post.</li>
+                            <li>Rich-text editor for message composition (bold, italic, highlights).</li>
+                            <li>Send button triggers AI validation → delivery.</li>
+                            <li>Safe, intuitive, visually minimal with one main color + two secondary colors.</li>
+                        </ul>
+                    </div>
+                    <div id="revenue" class="topic">
+                        <h2>5️⃣ Revenue / Sustainability (optional, orthogonal)</h2>
+                        <ul>
+                            <li>Revenue must never touch user identity or complaint flow.</li>
+                            <li>Can come from: <ul><li>Local sponsorships (“Platform supported by …”)</li><li>NGO or civic organization backing</li><li>Ads that are contextual, not invasive</li></ul></li>
+                            <li>Core mission never compromised.</li>
+                        </ul>
+                    </div>
+                    <div id="vision" class="topic">
+                        <h2>6️⃣ Core Vision Statement (one line)</h2>
+                        <p>“NPM_Journalist empowers citizens to safely, anonymously, and responsibly communicate with authorities, ensuring their voices are heard without fear of personal risk.”</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Developer Section - Now with red border + direct scroll link -->
+            <div class="developer-section" id="developer-anchor">
+                
+                <h2>👨‍💻 Meet the Developer: Sonu Kumar</h2>
+                <div class="profile-container">
+                    
+                    <div class="profile-banner">
+                        <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=25&duration=4000&pause=1000&color=FE278B&center=true&vCenter=true&width=700&lines=%F0%9F%87%A7%F0%9F%87%AE+Bihar+Viral+Boy+Sonu+Kumar+%E2%9C%A8;14+y%2Fold+Tech+Changemaker+%F0%9F%94%A5;Open+Source+AI%2C+Votes%2C+Education+Innovation!;TEDx+Speaker+%26+Global+Impact+Maker!" alt="Animated Banner" loading="lazy">
+                    </div>
+                    <div style="padding: 0 3rem 3rem;">
+                        <div class="profile-header">
+                            <img src="https://i.ibb.co/rGJ6bGHc/Sonu2.jpg" alt="Sonu Kumar" class="profile-img" loading="lazy">
+                            <div class="profile-intro">
+                                <video autoplay muted loop playsinline id="background-video" poster="" aria-hidden="true">
+                                    <source src="https://npmexplorer.netlify.app/NPM%20ai%20backgrond%20video.mp4" type="video/mp4">
+                                    <!-- fallback: decorative background -->
+                                    </video>
+                                    <div id="video-overlay" aria-hidden="true"></div>
+                                <h2>Hi, I'm <span class="highlight">Sonu Kumar</span>! 🇮🇳🚀</h2>
+                                <p class="tagline">14-year-old tech prodigy & changemaker from Nalanda, Bihar.</p>
+                                <blockquote>From rural school to TEDx, building open source platforms and fixing democracy—one line of code at a time.</blockquote>
+                            </div>
+                        </div>
+                        <div class="social-badges">
+                            <a href="https://facebook.com/share/19dvhX1mH7/" target="_blank" rel="noopener"><i class="fab fa-facebook"></i> Facebook 405k+</a>
+                            <a href="https://youtu.be/qWTkKsegx9c" target="_blank" rel="noopener"><i class="fab fa-youtube"></i> TEDx Talk</a>
+                            <a href="https://pypi.org/project/npmai" target="_blank" rel="noopener"><i class="fab fa-python"></i> PyPI</a>
+                            <a href="mailto:sonu.kr.nalanda@gmail.com"><i class="fas fa-envelope"></i> Email</a>
+                            <a href="https://github.com/sonuramashishnpm" target="_blank" rel="noopener"><i class="fab fa-github"></i> GitHub</a>
+                        </div>
+                        <hr class="divider">
+                        <div class="profile-details">
+                            <div class="detail-box">
+                                <h3>🔥 Who Am I?</h3>
+                                <h4><strong>“Bihar Viral Boy”</strong> — Challenged Chief Minister & inspired millions at age 11.</h4>
+                                <h4><strong>TEDx Speaker (13)</strong> — Shared "Zid aur Junoon" journey on the global stage.</h4>
+                                <h4><strong>Open Source Innovator</strong> — Creating tools for education and democracy.</h4>
+                                <h4><strong>Self-taught Engineer</strong> — No formal CS background, just pure grit and internet.</h4>
+                            </div>
+                            <div class="detail-box">
+                                <h3>✨ Tech Toolbox</h3>
+                                <img src="https://skillicons.dev/icons?i=python,flask,streamlit,html,css,js,solidity,raspberrypi,selenium,git,github,docker,ai" alt="Tech icons" loading="lazy">
+                            </div>
+                        </div>
+                        <div class="full-width-box">
+                            <h3>🌟 Major Projects & Repos</h3>
+                            <div class="repo-list">
+                                <div class="repo-item"><strong>npmexplorer.netlify.app:</strong> Educational notes, 20+ news sources, AI insights.</div>
+                                <div class="repo-item"><strong>npmexplorer-flask:</strong> Automated Gemini/Google LLM search (No API!).</div>
+                                <div class="repo-item"><strong>npmai:</strong> LangChain-based wrapper for Grok, ChatGPT, Gemini, Copilot.</div>
+                                <div class="repo-item"><strong>NPM-Edu-AI Helper:</strong> Free large-file study tool for students.</div>
+                                <div class="repo-item"><strong>NPM-Youtube-Automation:</strong> Fully automated video upload workflow.</div>
+                                <div class="repo-item"><strong>Blockchain Voting:</strong> Tamper-proof hardware-secure election system.</div>
+                                <div class="repo-item"><strong>NPM Legal AI:</strong> Free legal intelligence toolkit.</div>
+                            </div>
+                        </div>
+                        <div class="profile-details">
+                            <div class="detail-box">
+                                <h3>💫 Achievements</h3>
+                                <h4>405K+ Facebook Followers.</h4>
+                                <h4>Allen Career Institute 100% Scholarship.</h4>
+                                <h4>Supported by Lok Sabha Speaker & MIT/Oxford circles.</h4>
+                            </div>
+                            <div class="detail-box">
+                                <h3>💬 Social Impact</h3>
+                                <p>Building a 400K+ youth movement. Blending rural activism with world-class tech to create ethical, free AI tools for "broke students."</p>
+                            </div>
+                        </div>
+                        <div class="full-width-box">
+                            <h3>🏗️ Mission & Goals</h3>
+                            <p>Democratize education, AI, & civic tech for everyone. Give rural students a global stage and affordable tools. Transform adversity into action.</p>
+                        </div>
+                        <div class="stats-container">
+                            <img src="https://github-readme-stats.vercel.app/api?username=sonuramashishnpm&show_icons=true&theme=radical" alt="GitHub Stats" loading="lazy">
+                            <img src="https://github-readme-streak-stats.herokuapp.com/?user=sonuramashishnpm&theme=radical" alt="GitHub Streak" loading="lazy">
+                        </div>
+                        <div class="mantra-box">
+                            <h2>🧠 "Rural-Zero to Revolution"</h2>
+                            <p>“No matter where you start, you can be the change. I choose code, courage, and kindness. Let's build... together.”</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section id="docs_section">
+            <div class="docs-content">
+                <h2>Docs</h2>
+                <p>Documentation will appear here later. Stay tuned!</p>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2026 NPM Journalist. Empowering voices safely. | Developed with ❤️ by Sonu Kumar</p>
+    </footer>
+    <script>
+        function switchSection(section) {
+            document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+            document.getElementById(section + '_section').classList.add('active');
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            if (section === 'about_us') showTopic('core-purpose');
+        }
+        function showTopic(topic) {
+            document.querySelectorAll('.topic').forEach(t => t.classList.remove('active'));
+            document.getElementById(topic).classList.add('active');
+            document.querySelectorAll('.aside-nav a').forEach(a => a.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        function scrollToDeveloper(link) {
+            document.getElementById('developer-anchor').scrollIntoView({ behavior: 'smooth' });
+            link.classList.add('active');
+        }
+        async function sendComplaint() {
+            const officer = document.getElementById('officer').value;
+            const subject = document.getElementById('subject').value;
+            const body = document.getElementById('complaint_body').value;
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = 'Sending...';
+            try {
+                const res = await fetch('/send_complain', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ officer, subject, body })
+                });
+                const data = await res.json();
+                responseDiv.innerHTML = data.response;
+            } catch (e) {
+                responseDiv.innerHTML = 'Error: Try again!';
+            }
+        }
+        function toggleTheme() {
+            const body = document.body;
+            body.setAttribute('data-theme', body.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+        }
+    </script>
+</body>
+</html>
