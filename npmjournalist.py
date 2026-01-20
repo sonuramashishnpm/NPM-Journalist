@@ -28,14 +28,15 @@ class npm_journalist:
     SCOPES = ["https://www.googleapis.com/auth/gmail.send",]
     
     creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-
+    gmail=build("gmail", "v1", credentials=creds)
+    
     message = MIMEText(body)
     message["to"] = to
     message["subject"] = subject
 
     raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
 
-    return creds.users().messages().send(
+    return gmail.users().messages().send(
         userId="me",
         body={"raw": raw}
     ).execute()
