@@ -15,8 +15,6 @@ class npm_journalist:
     self.body=body
 
   def _send_email(self,to, subject, body):
-    USER = "sonuramashishnpm@gmail.com"
-    PASS = "hpfj raoj iqel canu"
     off_emails={
       "Kota_DM":"dm-kot-rj@nic.in",
       "Rajasthan_CM":"cmrajasthan@nic.in",
@@ -29,27 +27,21 @@ class npm_journalist:
       "Patna_SP":"spcity-patna-bih@nic.in",
       "Sonu":"sonukumarviral123@gmail.com",
     }
-    msg = MIMEMultipart()
-    msg["to"] = off_emails[to]
-    msg["subject"] = subject
+    SCOPES = ["https://www.googleapis.com/auth/gmail.send",]
+    
+    creds = Credentials.from_authorized_user_file("token.json", SCOPES)
 
-    msg.attach(MIMEText(body))
+    message = MIMEText(body)
+    message["to"] = to
+    message["subject"] = subject
 
-    #if filepath and os.path.exists(filepath):
-      #filename = os.path.basename(filepath)
-      #attachment = MIMEBase("application", "octet-stream")
-      #attachment.set_payload(open(filepath, "rb").read())
-      #encoders.encode_base64(attachment)
-      #attachment.add_header("Content-Disposition", f"attachment; filename={filename}")
-      #msg.attach(attachment)
-    #else:
-      #pass
+    raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
 
-    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-        server.login(USER, PASS)
-        server.send_message(msg)
-        return "Email sent"
+    return gmail.users().messages().send(
+        userId="me",
+        body={"raw": raw}
+    ).execute()
+    
 
   def npmai(self):
     officer=self.officer
