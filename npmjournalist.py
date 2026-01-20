@@ -13,6 +13,7 @@ class npm_journalist:
     self.body=body
   
   def gmail_auth(self):
+    SCOPES = ["https://www.googleapis.com/auth/gmail.send",]
     if os.path.exists("token.json"):
         creds = Credentials.from_authorized_user_file("token.json", SCOPES)
     else:
