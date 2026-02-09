@@ -20,6 +20,7 @@ def data():
       body=body,
   )
   npm.npmai()
+  return jsonify({"response":"Email Sent Sucessfully We are also working on proving you a link from where you can track your complain and response"})
 
 
 if __name__=="main":
