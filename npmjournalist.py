@@ -57,10 +57,9 @@ class npm_journalist:
     officer=self.officer
     subject=self.subject
     body=self.body
-    return self._send_email(officer,subject,body)
     llm=Ollama(
-        model="llama3.2",
-        temperature="0.2"
+        model="qwen2.5-coder:7b",
+        temperature="0.4"
     )
 
     prompt=f"""
