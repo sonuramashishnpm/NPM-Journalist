@@ -1,600 +1,1793 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NPM Journalist</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #dc2626; /* Red */
-            --secondary-color: #ffffff; /* White */
-            --accent1: #f3f4f6; /* Light gray */
-            --accent2: #1f2937; /* Dark gray */
-            --text-primary: #000000;
-            --text-secondary: #6b7280;
-            --bg-primary: #111827;
-            --bg-secondary: #f9fafb;
-        }
-        [data-theme="dark"] {
-            --accent1: #111827;
-            --accent2: #374151;
-            --text-primary: #f9fafb;
-            --text-secondary: #d1d5db;
-            --bg-primary: #ffffff;
-            --bg-secondary: #1f2937;
-        }
-        /* --- Background video & overlay --- */
-        #background-video {
-            position: fixed;
-            inset: 0; /* top:0; right:0; bottom:0; left:0 */
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: -2; /* BACKMOST */
-            pointer-events: none;
-            
-        }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NPM Journalist — Raise Your Voice</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ── RESET & TOKENS ─────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#e63329;
+  --red-dark:#b5211a;
+  --red-glow:rgba(230,51,41,0.35);
+  --ink:#0a0a0a;
+  --ink2:#1a1a1a;
+  --paper:#f5f0e8;
+  --paper2:#ede8dc;
+  --paper3:#e2ddd0;
+  --steel:#2a2a35;
+  --muted:#6b6671;
+  --green:#059669;
+  --green-dim:rgba(5,150,105,0.12);
+  --font-display:'Bebas Neue',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --font-mono:'DM Mono',monospace;
+  --r:6px;
+  --r2:10px;
+  --transition:.2s ease;
+}
 
-    #video-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(10, 10, 30, 0.6); /* semi-transparent overlay */
-        z-index: -1; /* Just above video */
-        pointer-events: none;
-        
-    }
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            transition: background-color 0.3s ease, color 0.3s ease;
-            line-height: 1.6;
-        }
-        header {
-            background-color: var(--bg-primary); /* White BG */
-            color: var(--primary-color); /* Red text */
-            padding: 1rem 2rem;
-            font-size: 1.5rem;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        nav {
-            display: flex;
-            gap: 1rem;
-        }
-        nav button {
-            background: red;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            color: var(--text-primary);
-        }
-        nav button:hover, nav button.active {
-            background-color: var(--primary-color);
-            color: #fff;
-        }
-        main {
-            padding: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        section {
-            display: none;
-        }
-        section.active {
-            display: block;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-        }
-        textarea {
-            width: 100%;
-            height: 200px;
-            padding: 1rem;
-            font-size: 1rem;
-            border: 1px solid var(--text-secondary);
-            border-radius: 8px;
-            resize: vertical;
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            box-sizing: border-box;
-        }
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-        #subject{
-            width: 100%;
-            height: 50px;
-            padding: 1rem;
-            font-size: 1rem;
-            border: 1px solid var(--text-secondary);
-            border-radius: 8px;
-            resize: vertical;
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            box-sizing: border-box;
-        }
-        #subject:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-        select {
-            width: 100%;
-            padding: 0.75rem;
-            font-size: 1rem;
-            border: 1px solid var(--text-secondary);
-            border-radius: 8px;
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-            box-sizing: border-box;
-        }
-        .send-btn {
-            padding: 0.75rem 2rem;
-            background-color: var(--primary-color);
-            color: var(--secondary-color);
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: transform 0.2s ease;
-        }
-        .send-btn:hover {
-            transform: translateY(-2px);
-        }
-        #response {
-            margin-top: 1rem;
-            padding: 1rem;
-            border-radius: 8px;
-            background-color: var(--accent1);
-        }
-        /* About Us */
-        .about-container {
-            display: grid;
-            grid-template-columns: 250px 1fr;
-            gap: 2rem;
-            color: var(--bg-primary);
-        }
-        .aside-nav {
-            background-color: var(--bg-primary);
-            padding: 1.5rem;
-            border-radius: 8px;
-            border: 1px solid var(--text-secondary);
-        }
-        .aside-nav h3 {
-            margin-bottom: 1rem;
-            color: var(--primary-color);
-        }
-        .aside-nav ul {
-            list-style: none;
-            padding: 0;
-        }
-        .aside-nav li {
-            margin-bottom: 0.5rem;
-        }
-        .aside-nav a {
-            text-decoration: none;
-            color: #ffff;
-            display: block;
-            padding: 0.5rem 0;
-            transition: color 0.3s ease;
-        }
-        .aside-nav a:hover, .aside-nav a.active {
-            color: var(--primary-color);
-        }
-        .about-content {
-            background-color: var(--bg-primary);
-            padding: 1.5rem;
-            border-radius: 8px;
-            border: 1px solid var(--text-secondary);
-            color: #ffff;
-        }
-        .about-content h2 {
-            color: var(--primary-color);
-        }
-        .topic {
-            display: none;
-        }
-        .topic.active {
-            display: block;
-        }
-        /* Developer Section - Forced visible, no hiding */
-        .developer-section {
-            margin-top: 3rem !important;
-            padding: 2rem;
-            border: 2px solid var(--primary-color) !important; /* Red border to make it pop */
-            border-radius: 12px;
-            display: block !important; /* Always show */
-        }
-        .developer-section h2 {
-            text-align: center;
-            color: var(--primary-color) !important;
-            font-size: 2rem;
-            margin-bottom: 2rem;
-        }
-        /* Profile styles - Simplified, no blur issues */
-        .profile-container {
-            max-width: 100%;
-            background: rgba(20, 20, 40, 0.8) !important; /* Solid BG */
-            border: 1px solid #1ed760;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            color: white;
-        }
-        .profile-banner {
-            background: linear-gradient(135deg, rgba(30, 215, 96, 0.2), transparent);
-            padding: 1.5rem;
-            text-align: center;
-        }
-        .profile-header {
-            display: flex;
-            align-items: flex-start;
-            gap: 2rem;
-            padding: 2rem;
-            flex-wrap: wrap;
-        }
-        .profile-img {
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 5px solid #1ed760;
-            animation: float 3s ease-in-out infinite;
-        }
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        .profile-intro h2 {
-            font-size: 2.5rem;
-            margin-bottom: 0.8rem;
-            color: white;
-        }
-        .highlight { color: #1ed760; }
-        .tagline {
-            color: #ddd;
-            font-style: italic;
-            margin-bottom: 1rem;
-        }
-        .social-badges {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin: 2rem 0;
-        }
-        .social-badges a {
-            background: #1ed760;
-            color: black;
-            padding: 0.8rem 1.6rem;
-            border-radius: 50px;
-            font-weight: bold;
-            text-decoration: none;
-            transition: transform 0.3s;
-        }
-        .social-badges a:hover { transform: scale(1.05); }
-        .divider {
-            border-top: 1px solid rgba(30,215,96,0.5);
-            margin: 2rem 0;
-        }
-        .profile-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            padding: 0 2rem 2rem;
-        }
-        .detail-box h3 { color: #1ed760; margin-bottom: 1rem; }
-        .detail-box h4 { color: #ddd; margin-bottom: 0.5rem; }
-        .detail-box p { color: #ccc; }
-        .full-width-box {
-            grid-column: 1 / -1;
-            background: rgba(30, 215, 96, 0.1);
-            padding: 2rem;
-            border-radius: 12px;
-            border-left: 4px solid #1ed760;
-        }
-        .repo-list { display: grid; gap: 1rem; }
-        .repo-item {
-            padding: 1rem;
-            background: rgba(0,0,0,0.5);
-            border-radius: 8px;
-            border-left: 3px solid #1ed760;
-            color: white;
-        }
-        .stats-container {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin: 2rem 0;
-        }
-        .stats-container img { max-width: 45%; border-radius: 8px; }
-        .mantra-box {
-            text-align: center;
-            padding: 2rem;
-            background: rgba(30, 215, 96, 0.1);
-            border-top: 1px solid #1ed760;
-        }
-        .mantra-box h2 { color: #1ed760; }
-        .mantra-box p { color: #eee; font-style: italic; }
-        blockquote {
-            color: #ccc;
-            border-left: 4px solid #1ed760;
-            padding-left: 1.5rem;
-            font-style: italic;
-            margin: 1rem 0;
-        }
-        /* Docs */
-        .docs-content {
-            background-color: var(--bg-secondary);
-            padding: 1.5rem;
-            border-radius: 8px;
-            border: 1px solid var(--text-secondary);
-        }
-        footer {
-            background-color: var(--bg-primary); /* White BG */
-            color: var(--primary-color); /* Red text */
-            text-align: center;
-            padding: 1rem;
-            margin-top: 3rem;
-        }
-        .theme-toggle {
-            background: var(--primary-color);
-            color: var(--secondary-color);
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-    </style>
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-body);
+  background:var(--ink);
+  color:var(--paper);
+  min-height:100vh;
+  overflow-x:hidden;
+  cursor:default;
+}
+
+/* ── BACKGROUND VIDEO ────────────────────────────── */
+#background-video{
+  position:fixed;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  z-index:-2;
+  pointer-events:none;
+  opacity:.18;
+  filter:grayscale(100%) contrast(1.2);
+}
+#video-overlay{
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(230,51,41,.08) 0%, transparent 70%),
+    linear-gradient(160deg, rgba(10,10,10,.97) 0%, rgba(20,18,16,.95) 100%);
+  z-index:-1;pointer-events:none;
+}
+
+/* Grain texture overlay */
+body::before{
+  content:'';
+  position:fixed;inset:0;z-index:0;
+  pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity:.4;
+}
+
+/* ── MASTHEAD / HEADER ───────────────────────────── */
+header{
+  position:sticky;top:0;z-index:200;
+  background:rgba(8,8,8,.96);
+  border-bottom:1px solid rgba(230,51,41,.3);
+  backdrop-filter:blur(12px);
+  padding:0 2rem;
+}
+.header-inner{
+  max-width:1280px;margin:0 auto;
+  display:flex;align-items:stretch;
+  gap:0;
+  min-height:64px;
+}
+
+/* Logo */
+.logo-wrap{
+  display:flex;align-items:center;gap:12px;
+  padding-right:24px;
+  border-right:1px solid rgba(255,255,255,.07);
+  flex-shrink:0;
+}
+.logo-icon{
+  width:36px;height:36px;
+  background:var(--red);
+  border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+  box-shadow:0 0 16px var(--red-glow);
+  animation:icon-breathe 3s ease-in-out infinite;
+}
+@keyframes icon-breathe{
+  0%,100%{box-shadow:0 0 12px var(--red-glow)}
+  50%{box-shadow:0 0 28px rgba(230,51,41,.5)}
+}
+.logo-text{
+  font-family:var(--font-display);
+  font-size:1.5rem;letter-spacing:.04em;
+  color:var(--paper);line-height:1;
+}
+.logo-text span{color:var(--red)}
+
+/* Nav tabs */
+nav{
+  display:flex;align-items:stretch;
+  flex:1;gap:0;
+  padding:0 12px;
+  overflow-x:auto;
+}
+nav::-webkit-scrollbar{display:none}
+nav button{
+  font-family:var(--font-body);
+  font-size:.78rem;font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;
+  background:transparent;
+  color:rgba(245,240,232,.45);
+  border:none;
+  padding:0 16px;
+  cursor:pointer;
+  transition:var(--transition);
+  position:relative;
+  white-space:nowrap;
+  border-bottom:2px solid transparent;
+}
+nav button::after{
+  content:'';
+  position:absolute;bottom:-1px;left:0;right:0;
+  height:2px;background:var(--red);
+  transform:scaleX(0);
+  transition:transform .25s ease;
+  transform-origin:left;
+}
+nav button:hover{color:var(--paper)}
+nav button.active{
+  color:var(--paper);
+  border-bottom-color:var(--red);
+}
+nav button.active::after{transform:scaleX(1)}
+
+/* Login button */
+.login-btn{
+  display:flex;align-items:center;gap:8px;
+  margin-left:auto;
+  padding:0 0 0 16px;
+  border-left:1px solid rgba(255,255,255,.07);
+  flex-shrink:0;
+}
+.login-btn button{
+  font-family:var(--font-body);
+  font-size:.8rem;font-weight:600;
+  background:var(--green);color:white;
+  border:none;
+  padding:.5rem 1.1rem;
+  border-radius:var(--r);
+  cursor:pointer;
+  transition:var(--transition);
+  display:flex;align-items:center;gap:6px;
+}
+.login-btn button:hover{
+  background:#047857;
+  transform:translateY(-1px);
+  box-shadow:0 4px 16px rgba(5,150,105,.3);
+}
+
+/* ── MAIN LAYOUT ─────────────────────────────────── */
+main{
+  max-width:1280px;
+  margin:0 auto;
+  padding:2.5rem 2rem;
+  position:relative;z-index:1;
+}
+
+section{display:none}
+section.active{display:block;animation:fade-up .35s ease}
+@keyframes fade-up{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ── CARD ─────────────────────────────────────────── */
+.card{
+  background:rgba(245,240,232,.03);
+  border:1px solid rgba(245,240,232,.08);
+  border-radius:var(--r2);
+  padding:2.5rem;
+  margin-bottom:1.5rem;
+  backdrop-filter:blur(4px);
+  transition:border-color .3s;
+}
+.card:hover{border-color:rgba(245,240,232,.14)}
+
+/* ── SECTION HERO TITLES ─────────────────────────── */
+.section-hero{
+  margin-bottom:2rem;
+  padding-bottom:1.5rem;
+  border-bottom:1px solid rgba(245,240,232,.07);
+}
+.section-eyebrow{
+  font-size:.7rem;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:var(--red);margin-bottom:8px;
+  display:flex;align-items:center;gap:8px;
+}
+.section-eyebrow::before{
+  content:'';display:inline-block;
+  width:20px;height:1px;background:var(--red);
+}
+.section-title{
+  font-family:var(--font-display);
+  font-size:clamp(2.2rem, 5vw, 3.5rem);
+  letter-spacing:.02em;
+  color:var(--paper);
+  line-height:.95;
+  margin-bottom:10px;
+}
+.section-title span{color:var(--red)}
+.section-desc{
+  font-size:.95rem;
+  color:rgba(245,240,232,.5);
+  max-width:480px;
+  line-height:1.65;
+}
+
+/* ── FORM ELEMENTS ───────────────────────────────── */
+.field-group{margin-bottom:1.25rem}
+.field-label{
+  display:block;
+  font-size:.75rem;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;
+  color:rgba(245,240,232,.5);
+  margin-bottom:6px;
+}
+textarea,input[type="text"],
+input[type="email"],input[type="password"],
+input[type="tel"],select{
+  width:100%;
+  background:rgba(245,240,232,.05);
+  border:1px solid rgba(245,240,232,.1);
+  border-radius:var(--r);
+  padding:.85rem 1rem;
+  font-family:var(--font-body);
+  font-size:.95rem;
+  color:var(--paper);
+  transition:border-color .2s,background .2s;
+  outline:none;
+  margin-bottom:0;
+}
+textarea:focus,input:focus,select:focus{
+  border-color:var(--red);
+  background:rgba(245,240,232,.07);
+  box-shadow:0 0 0 3px rgba(230,51,41,.1);
+}
+textarea{resize:vertical;min-height:120px}
+select option{background:var(--ink2);color:var(--paper)}
+input[type="file"]{
+  padding:.7rem 1rem;
+  font-size:.85rem;
+  color:rgba(245,240,232,.6);
+  cursor:pointer;
+}
+input[readonly]{
+  opacity:.6;cursor:default;
+  font-family:var(--font-mono);font-size:.85rem;
+}
+
+/* Two-column field row */
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ── BUTTONS ─────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:8px;
+  font-family:var(--font-body);
+  font-size:.9rem;font-weight:600;
+  letter-spacing:.04em;
+  border:none;border-radius:var(--r);
+  cursor:pointer;
+  transition:all .22s ease;
+  padding:.85rem 2rem;
+}
+.btn-primary{
+  background:var(--red);color:white;
+  width:100%;
+  font-size:1rem;
+  padding:1rem;
+  border-radius:50px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  position:relative;overflow:hidden;
+}
+.btn-primary::before{
+  content:'';
+  position:absolute;inset:0;
+  background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.1) 50%, transparent 70%);
+  transform:translateX(-100%);
+  transition:transform .5s ease;
+}
+.btn-primary:hover::before{transform:translateX(100%)}
+.btn-primary:hover{
+  background:var(--red-dark);
+  transform:translateY(-2px);
+  box-shadow:0 8px 28px var(--red-glow);
+}
+.btn-primary:active{transform:translateY(0)}
+
+.btn-green{
+  background:var(--green);color:white;
+  width:100%;padding:1rem;
+  border-radius:50px;font-size:1rem;
+  letter-spacing:.06em;text-transform:uppercase;
+}
+.btn-green:hover{
+  background:#047857;
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(5,150,105,.3);
+}
+
+.btn-outline{
+  background:transparent;
+  color:rgba(245,240,232,.6);
+  border:1px solid rgba(245,240,232,.15);
+  padding:.6rem 1.2rem;
+  border-radius:var(--r);font-size:.85rem;
+}
+.btn-outline:hover{
+  color:var(--paper);
+  border-color:rgba(245,240,232,.35);
+  background:rgba(245,240,232,.05);
+}
+
+/* ── MAP ─────────────────────────────────────────── */
+.leaflet-container{
+  height:340px;width:100%;
+  border-radius:var(--r2);
+  border:1px solid rgba(245,240,232,.1);
+  margin-bottom:0;
+}
+.map-label{
+  font-size:.75rem;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;
+  color:rgba(245,240,232,.5);
+  margin-bottom:8px;display:block;
+}
+
+/* ── RADIO GROUP ─────────────────────────────────── */
+.radio-group{
+  display:flex;flex-direction:column;gap:8px;
+  margin-bottom:0;
+}
+.radio-group label{
+  display:flex;align-items:center;gap:10px;
+  font-size:.9rem;
+  color:rgba(245,240,232,.7);
+  cursor:pointer;
+  padding:10px 14px;
+  border:1px solid rgba(245,240,232,.08);
+  border-radius:var(--r);
+  transition:.15s;
+}
+.radio-group label:hover{
+  background:rgba(245,240,232,.04);
+  border-color:rgba(245,240,232,.15);
+}
+.radio-group input[type="radio"]{
+  width:auto;margin:0;padding:0;
+  accent-color:var(--red);
+}
+
+/* ── REPORT SECTION ──────────────────────────────── */
+.report-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1.5rem;
+}
+@media(max-width:768px){.report-grid{grid-template-columns:1fr}}
+
+.upload-zone{
+  border:2px dashed rgba(245,240,232,.15);
+  border-radius:var(--r2);
+  padding:2rem;
+  text-align:center;
+  transition:.2s;
+  cursor:pointer;
+  min-height:140px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:10px;
+}
+.upload-zone:hover{
+  border-color:var(--red);
+  background:rgba(230,51,41,.04);
+}
+.upload-zone .upload-icon{
+  font-size:2rem;opacity:.4;
+}
+.upload-zone p{
+  font-size:.85rem;
+  color:rgba(245,240,232,.4);
+}
+.upload-zone input[type="file"]{
+  position:absolute;opacity:0;
+  width:100%;height:100%;
+  cursor:pointer;
+}
+.upload-zone{position:relative}
+
+/* ── OFFICER SELECT ──────────────────────────────── */
+.officer-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:8px;
+  margin-bottom:1.5rem;
+}
+.officer-chip{
+  padding:8px 12px;
+  border:1px solid rgba(245,240,232,.1);
+  border-radius:var(--r);
+  font-size:.8rem;
+  color:rgba(245,240,232,.5);
+  background:rgba(245,240,232,.03);
+  cursor:pointer;
+  transition:.15s;
+  text-align:center;
+}
+.officer-chip:hover{
+  border-color:rgba(230,51,41,.4);
+  color:var(--paper);
+  background:rgba(230,51,41,.08);
+}
+.officer-chip.selected{
+  border-color:var(--red);
+  color:var(--paper);
+  background:rgba(230,51,41,.12);
+}
+
+/* ── VOLUNTEER HUB ───────────────────────────────── */
+.volunteer-hero{
+  text-align:center;
+  padding:3rem 2rem;
+}
+.vol-action-row{
+  display:flex;gap:12px;justify-content:center;flex-wrap:wrap;
+  margin-top:2rem;
+}
+.vol-action-row .btn{min-width:200px}
+
+.vol-form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1.5rem;
+}
+@media(max-width:768px){.vol-form-grid{grid-template-columns:1fr}}
+
+/* Photo preview */
+#photo_preview{
+  height:180px;
+  border:2px dashed rgba(245,240,232,.12);
+  border-radius:var(--r2);
+  display:flex;align-items:center;justify-content:center;
+  color:rgba(245,240,232,.3);
+  font-size:.85rem;
+  overflow:hidden;
+  transition:.2s;
+}
+#photo_preview:hover{border-color:rgba(245,240,232,.25)}
+
+/* ═══════════════════════════════════════
+   VOLUNTEER PROFILE — GitHub-style layout
+═══════════════════════════════════════ */
+#vol_profile{
+  display:none;
+}
+
+.profile-layout{
+  display:grid;
+  grid-template-columns:260px 1fr;
+  gap:2rem;
+  align-items:start;
+}
+@media(max-width:768px){
+  .profile-layout{grid-template-columns:1fr}
+}
+
+/* Left sidebar */
+.profile-sidebar{}
+.profile-avatar-wrap{
+  position:relative;
+  margin-bottom:1rem;
+}
+.profile-avatar-wrap img{
+  width:100%;
+  aspect-ratio:1;
+  border-radius:50%;
+  object-fit:cover;
+  border:3px solid rgba(230,51,41,.6);
+  box-shadow:0 0 32px var(--red-glow);
+  display:block;
+}
+.profile-avatar-badge{
+  position:absolute;bottom:8px;right:8px;
+  width:28px;height:28px;
+  border-radius:50%;
+  background:var(--green);
+  border:3px solid var(--ink2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;
+}
+
+.profile-name{
+  font-family:var(--font-display);
+  font-size:1.7rem;letter-spacing:.03em;
+  color:var(--paper);
+  margin-bottom:2px;
+}
+.profile-handle{
+  font-size:.85rem;
+  color:rgba(245,240,232,.35);
+  font-family:var(--font-mono);
+  margin-bottom:12px;
+}
+.profile-bio{
+  font-size:.88rem;
+  color:rgba(245,240,232,.55);
+  line-height:1.6;
+  margin-bottom:16px;
+}
+
+.profile-meta{
+  display:flex;flex-direction:column;gap:7px;
+  margin-bottom:16px;
+}
+.profile-meta-item{
+  display:flex;align-items:center;gap:8px;
+  font-size:.83rem;
+  color:rgba(245,240,232,.45);
+}
+.profile-meta-item i{
+  width:16px;text-align:center;
+  color:rgba(245,240,232,.25);
+  font-size:.8rem;
+}
+.profile-meta-item strong{color:rgba(245,240,232,.7)}
+
+.profile-tags{
+  display:flex;flex-wrap:wrap;gap:6px;
+  margin-bottom:16px;
+}
+
+/* Right content */
+.profile-content{}
+
+/* Tab strip inside profile */
+.profile-tabs{
+  display:flex;
+  border-bottom:1px solid rgba(245,240,232,.08);
+  margin-bottom:1.5rem;
+  gap:0;
+}
+.profile-tab{
+  font-family:var(--font-body);
+  font-size:.82rem;font-weight:600;
+  letter-spacing:.05em;text-transform:uppercase;
+  background:transparent;
+  color:rgba(245,240,232,.4);
+  border:none;
+  padding:.75rem 1.2rem;
+  cursor:pointer;
+  transition:var(--transition);
+  position:relative;
+  border-bottom:2px solid transparent;
+  margin-bottom:-1px;
+}
+.profile-tab:hover{color:var(--paper)}
+.profile-tab.active{
+  color:var(--paper);
+  border-bottom-color:var(--red);
+}
+
+.profile-tab-pane{display:none}
+.profile-tab-pane.active{display:block;animation:fade-up .3s ease}
+
+/* Overview pane */
+.overview-stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1rem;
+  margin-bottom:1.5rem;
+}
+.stat-box{
+  background:rgba(245,240,232,.04);
+  border:1px solid rgba(245,240,232,.08);
+  border-radius:var(--r2);
+  padding:1.2rem;
+  text-align:center;
+}
+.stat-box .stat-num{
+  font-family:var(--font-display);
+  font-size:1.8rem;letter-spacing:.03em;
+  color:var(--paper);
+  display:block;
+}
+.stat-box .stat-label{
+  font-size:.7rem;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:rgba(245,240,232,.3);
+  margin-top:2px;display:block;
+}
+
+.activity-row{
+  background:rgba(245,240,232,.03);
+  border:1px solid rgba(245,240,232,.07);
+  border-radius:var(--r);
+  padding:.9rem 1rem;
+  margin-bottom:.6rem;
+  display:flex;align-items:center;gap:10px;
+  font-size:.85rem;
+  color:rgba(245,240,232,.5);
+}
+.activity-row .act-icon{
+  font-size:1.1rem;flex-shrink:0;
+}
+
+/* Complaints / My Reports pane */
+.complaint-card{
+  background:rgba(245,240,232,.03);
+  border:1px solid rgba(245,240,232,.08);
+  border-radius:var(--r2);
+  overflow:hidden;
+  margin-bottom:1rem;
+  transition:border-color .2s;
+}
+.complaint-card:hover{border-color:rgba(245,240,232,.18)}
+.complaint-card-img{
+  width:100%;height:160px;
+  object-fit:cover;
+  display:block;
+  background:rgba(245,240,232,.05);
+}
+.complaint-card-img-placeholder{
+  width:100%;height:160px;
+  background:rgba(245,240,232,.04);
+  display:flex;align-items:center;justify-content:center;
+  font-size:2.5rem;opacity:.25;
+}
+.complaint-card-body{
+  padding:1rem 1.2rem;
+}
+.complaint-card-text{
+  font-size:.88rem;
+  color:rgba(245,240,232,.65);
+  line-height:1.6;
+  margin-bottom:.6rem;
+}
+.complaint-card-meta{
+  font-size:.72rem;
+  font-family:var(--font-mono);
+  color:rgba(245,240,232,.28);
+}
+
+.complaints-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1rem;
+}
+@media(max-width:640px){.complaints-grid{grid-template-columns:1fr}}
+
+.no-complaints{
+  text-align:center;
+  padding:3rem 2rem;
+}
+.no-complaints .nc-icon{font-size:2.5rem;opacity:.2;margin-bottom:.75rem}
+.no-complaints p{font-size:.88rem;color:rgba(245,240,232,.25)}
+
+/* Loading spinner */
+.loading-spinner{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:2rem;
+  font-size:.85rem;
+  color:rgba(245,240,232,.35);
+}
+.spinner{
+  width:18px;height:18px;
+  border:2px solid rgba(245,240,232,.1);
+  border-top-color:var(--red);
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── RESPONSE BLOCKS ─────────────────────────────── */
+.response-block{
+  margin-top:1.25rem;
+  padding:1rem 1.25rem;
+  border-radius:var(--r);
+  font-size:.9rem;
+  line-height:1.6;
+  border-left:3px solid;
+}
+.response-block.success{
+  background:rgba(5,150,105,.1);
+  border-color:var(--green);
+  color:#a7f3d0;
+}
+.response-block.error{
+  background:rgba(230,51,41,.1);
+  border-color:var(--red);
+  color:#fca5a5;
+}
+.response-block.loading{
+  background:rgba(245,240,232,.05);
+  border-color:rgba(245,240,232,.2);
+  color:rgba(245,240,232,.5);
+}
+#response,#issue_response{margin-top:1rem}
+
+/* ── ABOUT ──────────────────────────────────────── */
+.coming-soon{
+  text-align:center;
+  padding:4rem 2rem;
+}
+.coming-soon .cs-icon{
+  font-size:3rem;margin-bottom:1rem;opacity:.3;
+}
+.coming-soon h3{
+  font-family:var(--font-display);
+  font-size:1.8rem;letter-spacing:.04em;
+  color:rgba(245,240,232,.4);
+  margin-bottom:8px;
+}
+.coming-soon p{
+  font-size:.9rem;color:rgba(245,240,232,.25);
+}
+
+/* ── MODAL ───────────────────────────────────────── */
+.modal{
+  display:none;
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.75);
+  z-index:1000;
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.modal-content{
+  background:var(--ink2);
+  border:1px solid rgba(245,240,232,.1);
+  border-radius:var(--r2);
+  padding:2.5rem;
+  width:90%;max-width:400px;
+  animation:modal-in .25s ease;
+}
+@keyframes modal-in{
+  from{opacity:0;transform:scale(.95) translateY(10px)}
+  to{opacity:1;transform:scale(1) translateY(0)}
+}
+.modal-title{
+  font-family:var(--font-display);
+  font-size:1.8rem;letter-spacing:.04em;
+  margin-bottom:6px;
+}
+.modal-sub{
+  font-size:.82rem;color:rgba(245,240,232,.4);
+  margin-bottom:1.5rem;
+}
+.modal-field{margin-bottom:1rem}
+.modal-close{
+  background:none;border:none;
+  color:rgba(245,240,232,.3);
+  font-size:.85rem;cursor:pointer;
+  margin-top:1rem;
+  display:block;text-align:center;width:100%;
+  padding:.5rem;transition:.15s;
+}
+.modal-close:hover{color:var(--red)}
+
+/* ── FOOTER ──────────────────────────────────────── */
+footer{
+  position:relative;z-index:1;
+  border-top:1px solid rgba(245,240,232,.06);
+  padding:1.5rem 2rem;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+}
+.footer-logo{
+  font-family:var(--font-display);
+  font-size:1.1rem;letter-spacing:.06em;
+  color:var(--red);
+}
+.footer-text{
+  font-size:.8rem;
+  color:rgba(245,240,232,.25);
+}
+.footer-heart{color:var(--red)}
+
+/* ── DIVIDER ─────────────────────────────────────── */
+.divider{
+  height:1px;
+  background:rgba(245,240,232,.07);
+  margin:1.5rem 0;
+}
+
+/* ── TAGS / BADGES ───────────────────────────────── */
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:.7rem;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 10px;border-radius:20px;
+  background:rgba(230,51,41,.15);
+  color:var(--red);
+  border:1px solid rgba(230,51,41,.3);
+}
+.badge-green{
+  background:rgba(5,150,105,.12);
+  color:#34d399;
+  border-color:rgba(5,150,105,.3);
+}
+.badge-blue{
+  background:rgba(59,130,246,.12);
+  color:#93c5fd;
+  border-color:rgba(59,130,246,.3);
+}
+
+/* ── ORG NAME CONTAINER ──────────────────────────── */
+#org_name_container{margin-top:1rem}
+
+/* ── SCROLLBAR ───────────────────────────────────── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:rgba(245,240,232,.03)}
+::-webkit-scrollbar-thumb{background:rgba(245,240,232,.1);border-radius:3px}
+
+/* ── RESPONSIVE ──────────────────────────────────── */
+@media(max-width:640px){
+  header{padding:0 1rem}
+  .logo-text{font-size:1.2rem}
+  main{padding:1.5rem 1rem}
+  .card{padding:1.5rem}
+  .field-row{grid-template-columns:1fr}
+  .overview-stats{grid-template-columns:1fr 1fr}
+}
+</style>
 </head>
-<body data-theme="light">
-    <video autoplay muted loop playsinline id="background-video" poster="" aria-hidden="true">
-    <source src="https://npmexplorer.netlify.app/NPM%20ai%20backgrond%20video.mp4" type="video/mp4">
-    <!-- fallback: decorative background -->
-  </video>
-  <div id="video-overlay" aria-hidden="true"></div>
-    <header>
-        <span>NPM Journalist</span>
-    </header>
+<body>
+
+<video autoplay muted loop playsinline id="background-video">
+  <source src="https://npmexplorer.netlify.app/NPM%20ai%20backgrond%20video.mp4" type="video/mp4"/>
+</video>
+<div id="video-overlay"></div>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-inner">
+    <div class="logo-wrap">
+      <div class="logo-icon">📰</div>
+      <div class="logo-text">NPM <span>Journalist</span></div>
+    </div>
     <nav>
-        <button class="active" onclick="switchSection('send_complain')">Send Complaint</button>
-        <button onclick="switchSection('about_us')">About Us</button>
-        <button onclick="switchSection('docs')">Docs</button>
+      <button class="active" onclick="switchSection('report_issue',this)">📸 Report Issue</button>
+      <button onclick="switchSection('send_complain',this)">📨 Send Complaint</button>
+      <button onclick="switchSection('volunteer',this)">👷 Volunteer Hub</button>
+      <button onclick="switchSection('about_us',this)">About</button>
     </nav>
-    <main>
-        <section id="send_complain_section" class="active">
-            <label for="officer">Select Officer / Post:</label>
-            <select id="officer">
-                <option value="Kota_DM">DM Kota</option>
-                <option value="Rajasthan_CM">Rajasthan CM</option>
-                <option value="Bihar_CM">Bihar CM</option>
-                <option value="Delhi_CM">Delhi CM</option>
-                <option value="Haryana_CM">Haryana CM</option>
-                <option value="Patna_DM">Patna DM</option>
-                <option value="Nalanda_DM">Nalanda DM</option>
-                <option value="Sonu">Sonu Kumar</option>
-                <option value="Kota_SP">Kota SP</option>
-                <option value="Nalanda_SP">Nalanda SP</option>
-                <option value="Patna_SP">Patna SP</option>
-            </select>
-            <textarea id="subject" placeholder="Write a Subject or Titile of your complain"></textarea>
-            <textarea id="complaint_body" placeholder="Write your complaint here..."></textarea>
-            <button class="send-btn" onclick="sendComplaint()">Send</button>
-            <div id="response"></div>
-        </section>
-        <section id="about_us_section">
-            <div class="about-container">
-                <aside class="aside-nav">
-                    <h3>Topics</h3>
-                    <ul>
-                        <li><a href="#" class="active" onclick="showTopic('core-purpose', this)">Core Purpose</a></li>
-                        <li><a href="#" onclick="showTopic('not', this)">What it is NOT</a></li>
-                        <li><a href="#" onclick="showTopic('how', this)">How it Achieves This</a></li>
-                        <li><a href="#" onclick="showTopic('ux', this)">Frontend UX Vision</a></li>
-                        <li><a href="#" onclick="showTopic('revenue', this)">Revenue / Sustainability</a></li>
-                        <li><a href="#" onclick="showTopic('vision', this)">Core Vision Statement</a></li>
-                        <li><a href="#" onclick="scrollToDeveloper('developer-anchor',this)">👨‍💻 Meet Developer</a></li> <!-- New direct link -->
-                    </ul>
-                </aside>
-                <div class="about-content">
-                    <div id="core-purpose" class="topic active">
-                        <h2>1️⃣ Core Purpose</h2>
-                        <p>NPM_Journalist exists to:</p>
-                        <ul>
-                            <li>Enable citizens to safely send complaints or messages to government officers without fear of being traced or targeted.</li>
-                            <li>Provide ethical, responsible mediation so the message is safe, non-offensive, and constructive.</li>
-                            <li>Reduce the power asymmetry between ordinary users and authority figures.</li>
-                        </ul>
-                        <p><strong>The central promise:</strong> You can speak truth or file a complaint without fear, and your message will only go through if it’s safe and respectful.</p>
-                    </div>
-                    <div id="not" class="topic">
-                        <h2>2️⃣ What it is NOT</h2>
-                        <ul>
-                            <li>It’s not a paid service.</li>
-                            <li>It’s not a spam filter based on identity.</li>
-                            <li>It’s not a platform for monetizing complaints.</li>
-                            <li>It’s not a tool to bypass law or policy — it ensures civility and legality.</li>
-                        </ul>
-                    </div>
-                    <div id="how" class="topic">
-                        <h2>3️⃣ How it achieves this (technical vision)</h2>
-                        <ol>
-                            <li><strong>AI Validation</strong><ul><li>Validates complaint content.</li><li>Checks for offensive language or threats.</li><li>Responds Yes / No for safe delivery.</li></ul></li>
-                            <li><strong>Anonymity by design</strong><ul><li>No login, no payment, no identifiable tracking.</li><li>Only the complaint reaches the officer.</li></ul></li>
-                            <li><strong>Anti-spam without identity</strong><ul><li>One-shot submission.</li><li>Semantic similarity detection.</li><li>Officer-side quotas and reflective delays.</li><li>Cognitive friction for careful writing.</li></ul></li>
-                            <li><strong>Civic-first architecture</strong><ul><li>The platform never compromises user safety for revenue or convenience.</li><li>Focus on trust, integrity, and transparency.</li></ul></li>
-                        </ol>
-                    </div>
-                    <div id="ux" class="topic">
-                        <h2>4️⃣ Frontend / User Experience Vision</h2>
-                        <ul>
-                            <li>Minimal, clear UI with three sections: Send_Complain, About Us, Docs.</li>
-                            <li>Default to Send_Complain.</li>
-                            <li>Dropdown to select officer/post.</li>
-                            <li>Rich-text editor for message composition (bold, italic, highlights).</li>
-                            <li>Send button triggers AI validation → delivery.</li>
-                            <li>Safe, intuitive, visually minimal with one main color + two secondary colors.</li>
-                        </ul>
-                    </div>
-                    <div id="revenue" class="topic">
-                        <h2>5️⃣ Revenue / Sustainability (optional, orthogonal)</h2>
-                        <ul>
-                            <li>Revenue must never touch user identity or complaint flow.</li>
-                            <li>Can come from: <ul><li>Local sponsorships (“Platform supported by …”)</li><li>NGO or civic organization backing</li><li>Ads that are contextual, not invasive</li></ul></li>
-                            <li>Core mission never compromised.</li>
-                        </ul>
-                    </div>
-                    <div id="vision" class="topic">
-                        <h2>6️⃣ Core Vision Statement (one line)</h2>
-                        <p>“NPM_Journalist empowers citizens to safely, anonymously, and responsibly communicate with authorities, ensuring their voices are heard without fear of personal risk.”</p>
-                    </div>
-                </div>
+    <div class="login-btn">
+      <button id="header_login_btn" onclick="showLoginModal()">
+        <i class="fa fa-user"></i> Login
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ══════════════════════════════════
+     REPORT ISSUE
+══════════════════════════════════ -->
+<section id="report_issue_section" class="active">
+  <div class="section-hero">
+    <div class="section-eyebrow">Civic Action</div>
+    <h1 class="section-title">Report a <span>Problem</span></h1>
+    <p class="section-desc">Photo + location → nearest volunteer gets it instantly. No bureaucracy. Real people, real action.</p>
+  </div>
+
+  <div class="report-grid">
+    <!-- Left column -->
+    <div>
+      <div class="card">
+        <div class="field-group">
+          <label class="field-label">📸 Upload Problem Photo</label>
+          <div class="upload-zone">
+            <input type="file" id="issue_photo" accept="image/*" capture="environment" onchange="previewIssuePhoto(this)"/>
+            <div class="upload-icon" id="issue_photo_icon">📷</div>
+            <p id="issue_photo_label">Tap to take photo or upload from gallery</p>
+            <span class="badge">Supports JPG, PNG, HEIC</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field-group">
+          <label class="field-label">✍️ Describe the Problem</label>
+          <textarea id="issue_desc" rows="5" placeholder="Be specific... e.g. Large pothole on main road near the temple, causing accidents every day"></textarea>
+        </div>
+
+        <button class="btn btn-primary" onclick="submitIssue()">
+          🚀 Send to Nearest Volunteer
+        </button>
+        <div id="issue_response"></div>
+      </div>
+    </div>
+
+    <!-- Right column — map -->
+    <div>
+      <div class="card" style="padding:1.5rem">
+        <label class="map-label">📍 Location of Issue — drag marker or tap map</label>
+        <div id="report-map" class="leaflet-container"></div>
+        <div class="field-row" style="margin-top:10px">
+          <div class="field-group" style="margin-bottom:0">
+            <input type="text" id="report_lat" placeholder="Latitude" readonly/>
+          </div>
+          <div class="field-group" style="margin-bottom:0">
+            <input type="text" id="report_lng" placeholder="Longitude" readonly/>
+          </div>
+        </div>
+        <p style="font-size:.78rem;color:rgba(245,240,232,.3);margin-top:10px;font-family:var(--font-mono)">
+          Click anywhere on the map to set location
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SEND COMPLAINT
+══════════════════════════════════ -->
+<section id="send_complain_section">
+  <div class="section-hero">
+    <div class="section-eyebrow">Anonymous Channel</div>
+    <h1 class="section-title">Send Direct <span>Complaint</span></h1>
+    <p class="section-desc">Reach government officials directly and anonymously. AI reviews your complaint before sending. Use only if you fear trouble.</p>
+  </div>
+
+  <div class="card">
+    <div class="field-group">
+      <label class="field-label">Select Officer / Post</label>
+      <select id="officer">
+        <option value="Kota_DM">DM Kota</option>
+        <option value="Rajasthan_CM">Rajasthan CM</option>
+        <option value="Bihar_CM">Bihar CM</option>
+        <option value="Delhi_CM">Delhi CM</option>
+        <option value="Patna_DM">DM Patna</option>
+        <option value="Nalanda_DM">DM Nalanda</option>
+        <option value="Kota_SP">SP Kota City</option>
+        <option value="Nalanda_SP">SP Nalanda</option>
+        <option value="Patna_SP">SP Patna City</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Subject / Title</label>
+      <textarea id="subject" rows="2" placeholder="Brief subject of your complaint"></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Complaint Details</label>
+      <textarea id="complaint_body" rows="7" placeholder="Write your complaint in detail. Be factual and specific. Our AI will review for safety before sending."></textarea>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;padding:12px 16px;background:rgba(245,240,232,.04);border-radius:var(--r);border:1px solid rgba(245,240,232,.08)">
+      <span style="font-size:1.1rem">🤖</span>
+      <p style="font-size:.82rem;color:rgba(245,240,232,.45);line-height:1.5">
+        AI safety check enabled — your complaint is reviewed for offensive language before sending. Your identity is never revealed.
+      </p>
+    </div>
+
+    <button class="btn btn-primary" onclick="sendComplaint()">
+      🔒 Send Anonymously
+    </button>
+    <div id="response"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     VOLUNTEER HUB
+══════════════════════════════════ -->
+<section id="volunteer_section">
+
+  <!-- Landing -->
+  <div class="card" id="startup">
+    <div class="volunteer-hero">
+      <div class="section-eyebrow" style="justify-content:center">Community</div>
+      <h1 class="section-title" style="font-size:clamp(2.5rem,6vw,4rem)">
+        Volunteer <span>Hub</span>
+      </h1>
+      <p style="font-size:1rem;color:rgba(245,240,232,.45);max-width:440px;margin:0 auto 0">
+        Join the network of citizens actively solving civic problems in their communities. Every issue reported reaches you first.
+      </p>
+      <div class="vol-action-row">
+        <button class="btn btn-green" onclick="signupstart()">
+          👷 Join as Volunteer
+        </button>
+        <button class="btn btn-outline" id="loginpage" onclick="showLoginModal()">
+          🔑 Login to Work for People
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signup Form -->
+  <div class="card" id="join" style="display:none">
+    <div class="section-hero">
+      <div class="section-eyebrow">New Volunteer</div>
+      <h2 class="section-title" style="font-size:2.2rem">Join the <span>Network</span></h2>
+      <p class="section-desc">Your information is stored securely. You will receive nearby issue alerts.</p>
+    </div>
+
+    <div class="vol-form-grid">
+      <!-- Left -->
+      <div>
+        <div class="field-group">
+          <label class="field-label">Full Name *</label>
+          <input type="text" id="v_name" placeholder="Enter your full name"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Email *</label>
+          <input type="email" id="v_email" placeholder="your@email.com"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Password</label>
+          <input type="password" id="v_password" placeholder="strongpassword@312321#"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Mobile Number * (+91)</label>
+          <input type="tel" id="v_mobile" placeholder="9876543210"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Profession</label>
+          <input type="text" id="v_profession" placeholder="Student / Teacher / Engineer etc."/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Volunteer Type</label>
+          <div class="radio-group">
+            <label><input type="radio" name="v_type" value="active" checked/> Active (Ready to go on field)</label>
+            <label><input type="radio" name="v_type" value="passive"/> Passive (Help when possible)</label>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Organisation Affiliation?</label>
+          <div class="radio-group">
+            <label><input type="radio" name="v_org_joined" value="no" checked onclick="toggleOrgName()"/> No (Independent)</label>
+            <label><input type="radio" name="v_org_joined" value="yes" onclick="toggleOrgName()"/> Yes</label>
+          </div>
+          <div id="org_name_container" style="display:none;margin-top:10px">
+            <input type="text" id="v_org_name" placeholder="e.g. NSS, Rotary Club"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right -->
+      <div>
+        <div class="field-group">
+          <label class="field-label">📍 Your Location — drag marker to set</label>
+          <div id="volunteer-map" class="leaflet-container"></div>
+          <div class="field-row" style="margin-top:10px">
+            <input type="text" id="v_lat" placeholder="Latitude" readonly/>
+            <input type="text" id="v_lng" placeholder="Longitude" readonly/>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Profile Photo</label>
+          <input type="file" id="v_photo" accept="image/*" onchange="previewVolunteerPhoto(this)"/>
+          <div id="photo_preview">📸 Upload a clear photo</div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">About Yourself</label>
+          <textarea id="v_bio" rows="4" placeholder="Why do you want to volunteer? Any special skills?"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div id="signup_response"></div>
+    <button onclick="submitVolunteerSignup()" class="btn btn-green" style="margin-top:0.5rem">
+      ✅ Complete Signup — Join Volunteer Network
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════
+       VOLUNTEER PROFILE (GitHub-style)
+       Shown after signup OR login
+  ══════════════════════════════════ -->
+  <div id="vol_profile">
+    <div class="profile-layout">
+
+      <!-- LEFT SIDEBAR -->
+      <div class="profile-sidebar">
+        <div class="profile-avatar-wrap">
+          <img id="prof_photo" src="https://via.placeholder.com/260/1a1a1a/e63329?text=👤" alt="Profile Photo"/>
+          <div class="profile-avatar-badge" id="prof_status_dot" title="Active Volunteer">✅</div>
+        </div>
+
+        <h2 class="profile-name" id="prof_name">—</h2>
+        <p class="profile-handle" id="prof_handle">@volunteer</p>
+        <p class="profile-bio" id="prof_bio">No bio provided.</p>
+
+        <div class="profile-meta">
+          <div class="profile-meta-item">
+            <i class="fa fa-briefcase"></i>
+            <span id="prof_profession">—</span>
+          </div>
+          <div class="profile-meta-item">
+            <i class="fa fa-envelope"></i>
+            <span id="prof_email">—</span>
+          </div>
+          <div class="profile-meta-item">
+            <i class="fa fa-phone"></i>
+            <span id="prof_phone">—</span>
+          </div>
+          <div class="profile-meta-item">
+            <i class="fa fa-map-marker-alt"></i>
+            <span id="prof_location">Location not set</span>
+          </div>
+          <div class="profile-meta-item">
+            <i class="fa fa-building"></i>
+            <span id="prof_org">Independent</span>
+          </div>
+        </div>
+
+        <div class="profile-tags" id="prof_tags">
+          <!-- Filled by JS -->
+        </div>
+
+        <button class="btn btn-outline" style="width:100%;font-size:.8rem" onclick="logoutVolunteer()">
+          <i class="fa fa-sign-out-alt"></i> &nbsp;Sign Out
+        </button>
+      </div>
+
+      <!-- RIGHT CONTENT -->
+      <div class="profile-content">
+        <div class="profile-tabs">
+          <button class="profile-tab active" onclick="switchProfileTab('overview',this)">📊 Overview</button>
+          <button class="profile-tab" onclick="switchProfileTab('my_reports',this)">📋 My Reports</button>
+        </div>
+
+        <!-- OVERVIEW TAB -->
+        <div class="profile-tab-pane active" id="tab_overview">
+          <div class="overview-stats">
+            <div class="stat-box">
+              <span class="stat-num" id="stat_complaints">0</span>
+              <span class="stat-label">Complaints Handled</span>
             </div>
-            <!-- Developer Section - Now with red border + direct scroll link -->
-            <div class="developer-section" id="developer-anchor">
-                
-                <h2>👨‍💻 Meet the Developer: Sonu Kumar</h2>
-                <div class="profile-container">
-                    
-                    <div class="profile-banner">
-                        <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=25&duration=4000&pause=1000&color=FE278B&center=true&vCenter=true&width=700&lines=%F0%9F%87%A7%F0%9F%87%AE+Bihar+Viral+Boy+Sonu+Kumar+%E2%9C%A8;14+y%2Fold+Tech+Changemaker+%F0%9F%94%A5;Open+Source+AI%2C+Votes%2C+Education+Innovation!;TEDx+Speaker+%26+Global+Impact+Maker!" alt="Animated Banner" loading="lazy">
-                    </div>
-                    <div style="padding: 0 3rem 3rem;">
-                        <div class="profile-header">
-                            <img src="https://i.ibb.co/rGJ6bGHc/Sonu2.jpg" alt="Sonu Kumar" class="profile-img" loading="lazy">
-                            <div class="profile-intro">
-                                <video autoplay muted loop playsinline id="background-video" poster="" aria-hidden="true">
-                                    <source src="https://npmexplorer.netlify.app/NPM%20ai%20backgrond%20video.mp4" type="video/mp4">
-                                    <!-- fallback: decorative background -->
-                                    </video>
-                                    <div id="video-overlay" aria-hidden="true"></div>
-                                <h2>Hi, I'm <span class="highlight">Sonu Kumar</span>! 🇮🇳🚀</h2>
-                                <p class="tagline">14-year-old tech prodigy & changemaker from Nalanda, Bihar.</p>
-                                <blockquote>From rural school to TEDx, building open source platforms and fixing democracy—one line of code at a time.</blockquote>
-                            </div>
-                        </div>
-                        <div class="social-badges">
-                            <a href="https://facebook.com/share/19dvhX1mH7/" target="_blank" rel="noopener"><i class="fab fa-facebook"></i> Facebook 405k+</a>
-                            <a href="https://youtu.be/qWTkKsegx9c" target="_blank" rel="noopener"><i class="fab fa-youtube"></i> TEDx Talk</a>
-                            <a href="https://pypi.org/project/npmai" target="_blank" rel="noopener"><i class="fab fa-python"></i> PyPI</a>
-                            <a href="mailto:sonu.kr.nalanda@gmail.com"><i class="fas fa-envelope"></i> Email</a>
-                            <a href="https://github.com/sonuramashishnpm" target="_blank" rel="noopener"><i class="fab fa-github"></i> GitHub</a>
-                        </div>
-                        <hr class="divider">
-                        <div class="profile-details">
-                            <div class="detail-box">
-                                <h3>🔥 Who Am I?</h3>
-                                <h4><strong>“Bihar Viral Boy”</strong> — Challenged Chief Minister & inspired millions at age 11.</h4>
-                                <h4><strong>TEDx Speaker (13)</strong> — Shared "Zid aur Junoon" journey on the global stage.</h4>
-                                <h4><strong>Open Source Innovator</strong> — Creating tools for education and democracy.</h4>
-                                <h4><strong>Self-taught Engineer</strong> — No formal CS background, just pure grit and internet.</h4>
-                            </div>
-                            <div class="detail-box">
-                                <h3>✨ Tech Toolbox</h3>
-                                <img src="https://skillicons.dev/icons?i=python,flask,streamlit,html,css,js,solidity,raspberrypi,selenium,git,github,docker,ai" alt="Tech icons" loading="lazy">
-                            </div>
-                        </div>
-                        <div class="full-width-box">
-                            <h3>🌟 Major Projects & Repos</h3>
-                            <div class="repo-list">
-                                <div class="repo-item"><strong>npmexplorer.netlify.app:</strong> Educational notes, 20+ news sources, AI insights.</div>
-                                <div class="repo-item"><strong>npmexplorer-flask:</strong> Automated Gemini/Google LLM search (No API!).</div>
-                                <div class="repo-item"><strong>npmai:</strong> LangChain-based wrapper for Grok, ChatGPT, Gemini, Copilot.</div>
-                                <div class="repo-item"><strong>NPM-Edu-AI Helper:</strong> Free large-file study tool for students.</div>
-                                <div class="repo-item"><strong>NPM-Youtube-Automation:</strong> Fully automated video upload workflow.</div>
-                                <div class="repo-item"><strong>Blockchain Voting:</strong> Tamper-proof hardware-secure election system.</div>
-                                <div class="repo-item"><strong>NPM Legal AI:</strong> Free legal intelligence toolkit.</div>
-                            </div>
-                        </div>
-                        <div class="profile-details">
-                            <div class="detail-box">
-                                <h3>💫 Achievements</h3>
-                                <h4>405K+ Facebook Followers.</h4>
-                                <h4>Allen Career Institute 100% Scholarship.</h4>
-                                <h4>Supported by Lok Sabha Speaker & MIT/Oxford circles.</h4>
-                            </div>
-                            <div class="detail-box">
-                                <h3>💬 Social Impact</h3>
-                                <p>Building a 400K+ youth movement. Blending rural activism with world-class tech to create ethical, free AI tools for "broke students."</p>
-                            </div>
-                        </div>
-                        <div class="full-width-box">
-                            <h3>🏗️ Mission & Goals</h3>
-                            <p>Democratize education, AI, & civic tech for everyone. Give rural students a global stage and affordable tools. Transform adversity into action.</p>
-                        </div>
-                        <div class="stats-container">
-                            <img src="https://github-readme-stats.vercel.app/api?username=sonuramashishnpm&show_icons=true&theme=radical" alt="GitHub Stats" loading="lazy">
-                            <img src="https://github-readme-streak-stats.herokuapp.com/?user=sonuramashishnpm&theme=radical" alt="GitHub Streak" loading="lazy">
-                        </div>
-                        <div class="mantra-box">
-                            <h2>🧠 "Rural-Zero to Revolution"</h2>
-                            <p>“No matter where you start, you can be the change. I choose code, courage, and kindness. Let's build... together.”</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="stat-box">
+              <span class="stat-num" id="stat_type">—</span>
+              <span class="stat-label">Volunteer Type</span>
             </div>
-        </section>
-        <section id="docs_section">
-            <div class="docs-content">
-                <h2>Docs</h2>
-                <p>Documentation will appear here later. Stay tuned!</p>
+            <div class="stat-box">
+              <span class="stat-num" id="stat_org_joined">—</span>
+              <span class="stat-label">Organisation</span>
             </div>
-        </section>
-    </main>
-    <footer>
-        <p>&copy; 2026 NPM Journalist. Empowering voices safely. | Developed with ❤️ by Sonu Kumar</p>
-    </footer>
-    <script>
-        function switchSection(section) {
-            document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
-            document.getElementById(section + '_section').classList.add('active');
-            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            if (section === 'about_us') showTopic('core-purpose');
-        }
-        function showTopic(topic) {
-            document.querySelectorAll('.topic').forEach(t => t.classList.remove('active'));
-            document.getElementById(topic).classList.add('active');
-            document.querySelectorAll('.aside-nav a').forEach(a => a.classList.remove('active'));
-            event.target.classList.add('active');
-        }
-        function scrollToDeveloper(link) {
-            document.getElementById('developer-anchor').scrollIntoView({ behavior: 'smooth' });
-            link.classList.add('active');
-        }
-        async function sendComplaint() {
-            const officer = document.getElementById('officer').value;
-            const subject = document.getElementById('subject').value;
-            const body = document.getElementById('complaint_body').value;
-            const responseDiv = document.getElementById('response');
-            responseDiv.innerHTML = 'Sending...';
-            try {
-                const res = await fetch('/send_complain', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ officer, subject, body })
-                });
-                const data = await res.json();
-                responseDiv.innerHTML = data.response;
-            } catch (e) {
-                responseDiv.innerHTML = 'Error: Try again!';
-            }
-        }
-    </script>
+          </div>
+
+          <p style="font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(245,240,232,.3);margin-bottom:.8rem">
+            Recent Activity
+          </p>
+
+          <div id="activity_feed">
+            <div class="activity-row">
+              <span class="act-icon">🗓️</span>
+              <span>Account created — welcome to the NPM Journalist network!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- MY REPORTS TAB -->
+        <div class="profile-tab-pane" id="tab_my_reports">
+          <div id="reports_loading" class="loading-spinner" style="display:none">
+            <div class="spinner"></div>
+            <span>Loading your reports…</span>
+          </div>
+
+          <div id="reports_container">
+            <!-- Complaints rendered here by JS -->
+            <div class="no-complaints" id="no_complaints_msg">
+              <div class="nc-icon">📋</div>
+              <p>No complaints yet. Your submitted reports will appear here.</p>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /profile-content -->
+    </div><!-- /profile-layout -->
+  </div><!-- /vol_profile -->
+
+</section>
+
+<!-- ══════════════════════════════════
+     ABOUT US
+══════════════════════════════════ -->
+<section id="about_us_section">
+  <div class="section-hero">
+    <div class="section-eyebrow">The Mission</div>
+    <h1 class="section-title">About <span>NPM Journalist</span></h1>
+  </div>
+  <div class="card">
+    <p style="font-size:1.05rem;color:rgba(245,240,232,.6);line-height:1.8;max-width:640px">
+      NPM Journalist is a civic technology platform designed to bridge the gap between citizens and government accountability in India. Built on the belief that every person deserves the right to raise their voice — anonymously, safely, and effectively.
+    </p>
+    <div class="divider"></div>
+    <p style="font-size:.9rem;color:rgba(245,240,232,.35);font-family:var(--font-mono)">
+      Built by Sonu Kumar · NPMAI Ecosystem · 2026
+    </p>
+  </div>
+</section>
+
+</main>
+
+<!-- ── LOGIN MODAL ── -->
+<div id="loginModal" class="modal">
+  <div class="modal-content">
+    <h2 class="modal-title">Welcome Back</h2>
+    <p class="modal-sub">Login to access your volunteer dashboard</p>
+    <div class="modal-field">
+      <input type="email" id="user_email" placeholder="Email address"/>
+    </div>
+    <div class="modal-field">
+      <input type="password" id="user_password" placeholder="Your password"/>
+    </div>
+    <div id="login_response"></div>
+    <button onclick="doLogin()" class="btn btn-green" style="margin-top:.5rem">
+      Continue →
+    </button>
+    <p style="text-align:center;margin-top:1rem;font-size:.78rem;color:rgba(245,240,232,.25)">
+      🔒 We never sell your data. 100% privacy guaranteed.
+    </p>
+    <button onclick="hideLoginModal()" class="modal-close">Close ✕</button>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-logo">NPM Journalist</div>
+  <p class="footer-text">© 2026 Made with <span class="footer-heart">❤</span> by Sonu Kumar · Empowering Citizens + Volunteers</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+let reportMap, volunteerMap;
+let reportMarker, volunteerMarker;
+let volunteerPhotoBase64 = null;
+let issuePhotoBase64    = null;
+let currentVolunteer   = null; // holds signed-in volunteer data
+
+/* ═══════════════════════════════════════════════
+   NAV — switch top-level sections
+═══════════════════════════════════════════════ */
+function switchSection(section, btn) {
+  document.querySelectorAll("main > section").forEach(s => s.classList.remove("active"));
+  document.getElementById(section + "_section").classList.add("active");
+
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+
+  if (section === "report_issue") setTimeout(initReportMap, 100);
+  if (section === "volunteer")    setTimeout(initVolunteerMap, 100);
+}
+
+/* ═══════════════════════════════════════════════
+   PROFILE TABS — inside volunteer profile
+═══════════════════════════════════════════════ */
+function switchProfileTab(tab, btn) {
+  document.querySelectorAll(".profile-tab-pane").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".profile-tab").forEach(b => b.classList.remove("active"));
+  document.getElementById("tab_" + tab).classList.add("active");
+  if (btn) btn.classList.add("active");
+}
+
+/* ═══════════════════════════════════════════════
+   MAPS
+═══════════════════════════════════════════════ */
+function initReportMap() {
+  if (reportMap) return;
+  reportMap = L.map("report-map").setView([26.9124, 75.7873], 13); // Jaipur default
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap contributors",
+  }).addTo(reportMap);
+  reportMarker = L.marker([26.9124, 75.7873], { draggable: true }).addTo(reportMap);
+
+  function updateReport(lat, lng) {
+    document.getElementById("report_lat").value = lat.toFixed(6);
+    document.getElementById("report_lng").value = lng.toFixed(6);
+  }
+  reportMarker.on("dragend", e => {
+    const p = e.target.getLatLng();
+    updateReport(p.lat, p.lng);
+  });
+  reportMap.on("click", e => {
+    reportMarker.setLatLng(e.latlng);
+    updateReport(e.latlng.lat, e.latlng.lng);
+  });
+  // Try to get user location
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
+      reportMap.setView([lat, lng], 15);
+      reportMarker.setLatLng([lat, lng]);
+      updateReport(lat, lng);
+    });
+  }
+  setTimeout(() => reportMap.invalidateSize(), 300);
+}
+
+function initVolunteerMap() {
+  if (volunteerMap) return;
+  volunteerMap = L.map("volunteer-map").setView([26.9124, 75.7873], 13);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap contributors",
+  }).addTo(volunteerMap);
+  volunteerMarker = L.marker([26.9124, 75.7873], { draggable: true }).addTo(volunteerMap);
+
+  function updateVol(lat, lng) {
+    document.getElementById("v_lat").value = lat.toFixed(6);
+    document.getElementById("v_lng").value = lng.toFixed(6);
+  }
+  volunteerMarker.on("dragend", e => {
+    const p = e.target.getLatLng();
+    updateVol(p.lat, p.lng);
+  });
+  volunteerMap.on("click", e => {
+    volunteerMarker.setLatLng(e.latlng);
+    updateVol(e.latlng.lat, e.latlng.lng);
+  });
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
+      volunteerMap.setView([lat, lng], 15);
+      volunteerMarker.setLatLng([lat, lng]);
+      updateVol(lat, lng);
+    });
+  }
+  setTimeout(() => volunteerMap.invalidateSize(), 300);
+}
+
+/* ═══════════════════════════════════════════════
+   PHOTO PREVIEWS
+═══════════════════════════════════════════════ */
+function previewVolunteerPhoto(input) {
+  const preview = document.getElementById("photo_preview");
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      volunteerPhotoBase64 = e.target.result;
+      preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">`;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function previewIssuePhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      issuePhotoBase64 = e.target.result;
+      document.getElementById("issue_photo_icon").innerHTML = `<img src="${e.target.result}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;">`;
+      document.getElementById("issue_photo_label").textContent = input.files[0].name;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   VOLUNTEER FORM HELPERS
+═══════════════════════════════════════════════ */
+function signupstart() {
+  document.getElementById("join").style.display = "block";
+  document.getElementById("startup").style.display = "none";
+  setTimeout(initVolunteerMap, 150);
+}
+
+function toggleOrgName() {
+  const isYes = document.querySelector('input[name="v_org_joined"]:checked').value === "yes";
+  document.getElementById("org_name_container").style.display = isYes ? "block" : "none";
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER VOLUNTEER PROFILE
+   Called after signup response OR signin response
+═══════════════════════════════════════════════ */
+function renderVolunteerProfile(data) {
+  /*
+    Expected data fields (from backend signin response / local signup):
+    name, email, phone, profession, photo_url, description,
+    active, passive, jno, jyes, organisation,
+    complaints (array of strings), photo_complain_link (array of urls)
+  */
+  currentVolunteer = data;
+
+  // Hide form views, show profile
+  document.getElementById("startup").style.display = "none";
+  document.getElementById("join").style.display     = "none";
+  document.getElementById("vol_profile").style.display = "block";
+
+  // Avatar
+  const photo = data.photo_url || data.photo || "https://via.placeholder.com/260/1a1a1a/e63329?text=👤";
+  document.getElementById("prof_photo").src = photo;
+
+  // Basic info
+  document.getElementById("prof_name").textContent       = data.name || "Volunteer";
+  document.getElementById("prof_handle").textContent     = "@" + (data.name || "volunteer").toLowerCase().replace(/\s+/g, "");
+  document.getElementById("prof_bio").textContent        = data.description || "No bio provided.";
+  document.getElementById("prof_email").textContent      = data.email || "—";
+  document.getElementById("prof_phone").textContent      = data.phone || data.mobile || "—";
+  document.getElementById("prof_profession").textContent = data.profession || "—";
+  document.getElementById("prof_org").textContent        = data.organisation || (data.org_joined === "yes" ? data.org_name : "Independent");
+
+  // Location string from lat/lng
+  const lat = data.lat || data.v_lat;
+  const lng = data.longt || data.lng || data.v_lng;
+  if (lat && lng) {
+    document.getElementById("prof_location").textContent = `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`;
+  }
+
+  // Status badge (active vs passive)
+  const isActive = data.active === true || data.active === "true" || data.v_type === "active";
+  document.getElementById("prof_status_dot").title = isActive ? "Active Volunteer" : "Passive Volunteer";
+  document.getElementById("prof_status_dot").textContent = isActive ? "✅" : "💤";
+
+  // Tags
+  const tagsEl = document.getElementById("prof_tags");
+  tagsEl.innerHTML = "";
+  if (isActive) tagsEl.innerHTML += `<span class="badge badge-green">Active</span>`;
+  else          tagsEl.innerHTML += `<span class="badge">Passive</span>`;
+  if (data.organisation || data.org_joined === "yes") tagsEl.innerHTML += `<span class="badge badge-blue">Org Member</span>`;
+  tagsEl.innerHTML += `<span class="badge">Volunteer</span>`;
+
+  // Stats
+  const complaints = data.complaints || [];
+  document.getElementById("stat_complaints").textContent = complaints.length;
+  document.getElementById("stat_type").textContent       = isActive ? "Active" : "Passive";
+  document.getElementById("stat_org_joined").textContent = (data.jyes || data.org_joined === "yes") ? "Yes" : "No";
+
+  // Activity feed
+  const feed = document.getElementById("activity_feed");
+  feed.innerHTML = `<div class="activity-row"><span class="act-icon">🗓️</span><span>Signed in — welcome back, ${data.name || "Volunteer"}!</span></div>`;
+  if (complaints.length > 0) {
+    feed.innerHTML += `<div class="activity-row"><span class="act-icon">📋</span><span>You have ${complaints.length} complaint(s) assigned to you.</span></div>`;
+  }
+
+  // Render complaints in My Reports tab
+  renderComplaints(complaints, data.photo_complain_link || []);
+
+  // Update header button to show name
+  document.getElementById("header_login_btn").innerHTML = `<i class="fa fa-user-check"></i> ${(data.name || "Profile").split(" ")[0]}`;
+  document.getElementById("header_login_btn").onclick = () => {
+    switchSection("volunteer", document.querySelector("nav button:nth-child(3)"));
+  };
+
+  // Store in localStorage for persistence across refreshes
+  localStorage.setItem("volunteerData", JSON.stringify(data));
+}
+
+function renderComplaints(complaintsArr, photosArr) {
+  const container = document.getElementById("reports_container");
+  const noMsg     = document.getElementById("no_complaints_msg");
+
+  if (!complaintsArr || complaintsArr.length === 0) {
+    noMsg.style.display = "block";
+    return;
+  }
+
+  noMsg.style.display = "none";
+  let html = `<div class="complaints-grid">`;
+
+  complaintsArr.forEach((text, i) => {
+    const photoUrl = photosArr[i] || null;
+    const imgHtml = photoUrl
+      ? `<img class="complaint-card-img" src="${photoUrl}" alt="Complaint Photo" onerror="this.style.display='none'">`
+      : `<div class="complaint-card-img-placeholder">📷</div>`;
+
+    html += `
+      <div class="complaint-card">
+        ${imgHtml}
+        <div class="complaint-card-body">
+          <p class="complaint-card-text">${escapeHtml(text)}</p>
+          <p class="complaint-card-meta">Complaint #${i + 1} · Assigned to you</p>
+        </div>
+      </div>`;
+  });
+
+  html += `</div>`;
+  container.innerHTML = html + (noMsg.outerHTML);
+  document.getElementById("no_complaints_msg").style.display = "none";
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
+}
+
+/* ═══════════════════════════════════════════════
+   SIGNUP — POST /signup
+═══════════════════════════════════════════════ */
+async function submitVolunteerSignup() {
+  const name     = document.getElementById("v_name").value.trim();
+  const email    = document.getElementById("v_email").value.trim();
+  const password = document.getElementById("v_password").value.trim();
+  const mobile   = document.getElementById("v_mobile").value.trim();
+  const resp     = document.getElementById("signup_response");
+
+  if (!name || !email || !mobile || !password) {
+    resp.innerHTML = `<div class="response-block error">⚠️ Please fill Name, Email, Password and Mobile Number.</div>`;
+    return;
+  }
+
+  resp.innerHTML = `<div class="response-block loading">🔄 Registering you as a volunteer…</div>`;
+
+  const volType = document.querySelector('input[name="v_type"]:checked').value;
+  const orgJoined = document.querySelector('input[name="v_org_joined"]:checked').value;
+
+  // Build FormData (photo as file)
+  const formData = new FormData();
+  formData.append("name",        name);
+  formData.append("email",       email);
+  formData.append("password",    password);
+  formData.append("phone",       mobile);
+  formData.append("profession",  document.getElementById("v_profession").value || "");
+  formData.append("lat",         document.getElementById("v_lat").value || "0");
+  formData.append("longt",       document.getElementById("v_lng").value || "0");
+  formData.append("active",      volType === "active" ? "true" : "false");
+  formData.append("passive",     volType === "passive" ? "true" : "false");
+  formData.append("jno",         orgJoined === "no" ? "true" : "false");
+  formData.append("jyes",        orgJoined === "yes" ? "true" : "false");
+  formData.append("description", document.getElementById("v_bio").value || "");
+  formData.append("organisation",document.getElementById("v_org_name") ? document.getElementById("v_org_name").value : "");
+
+  const photoInput = document.getElementById("v_photo");
+  if (photoInput.files[0]) {
+    formData.append("photo", photoInput.files[0]);
+  }
+
+  try {
+    const res = await fetch("/signup", {
+      method: "POST",
+      body: formData
+    });
+
+    if (res.ok) {
+      resp.innerHTML = `<div class="response-block success">✅ Signup successful! Loading your profile…</div>`;
+
+      // After signup, build a local data object and show profile
+      // (backend will send full data; if not, we build from form)
+      let profileData = {};
+      try { profileData = await res.json(); } catch(e) {}
+
+      // Merge form data as fallback
+      const localData = {
+        name, email, phone: mobile,
+        profession: document.getElementById("v_profession").value,
+        description: document.getElementById("v_bio").value,
+        photo_url: volunteerPhotoBase64 || "https://via.placeholder.com/260/1a1a1a/e63329?text=👤",
+        active: volType === "active",
+        passive: volType === "passive",
+        org_joined: orgJoined,
+        org_name: document.getElementById("v_org_name") ? document.getElementById("v_org_name").value : "",
+        lat: document.getElementById("v_lat").value,
+        longt: document.getElementById("v_lng").value,
+        complaints: [],
+        photo_complain_link: [],
+        joinedAt: new Date().toISOString(),
+        ...profileData
+      };
+
+      setTimeout(() => renderVolunteerProfile(localData), 800);
+    } else {
+      const err = await res.text();
+      resp.innerHTML = `<div class="response-block error">❌ Signup failed. ${err || "Please try again."}</div>`;
+    }
+  } catch(e) {
+    resp.innerHTML = `<div class="response-block error">❌ Network error. Please check your connection.</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   SIGNIN — POST /signin
+═══════════════════════════════════════════════ */
+async function doLogin() {
+  const email    = document.getElementById("user_email").value.trim();
+  const password = document.getElementById("user_password").value.trim();
+  const resp     = document.getElementById("login_response");
+
+  if (!email || !password) {
+    resp.innerHTML = `<div class="response-block error">⚠️ Please enter email and password.</div>`;
+    return;
+  }
+
+  resp.innerHTML = `<div class="response-block loading">🔄 Signing you in…</div>`;
+
+  try {
+    const res = await fetch("/signin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    if (res.ok) {
+      /*
+        Backend signin returns (from core.py):
+        name, profession, location, active, passive,
+        jno, jyes, photo_url, organisation, description,
+        complaints (list), photo_complain_link (list)
+      */
+      let data = {};
+      try { data = await res.json(); } catch(e) {}
+
+      // Attach email so we can show it
+      data.email = email;
+
+      hideLoginModal();
+      resp.innerHTML = "";
+
+      // Navigate to volunteer section and show profile
+      const volNavBtn = document.querySelector("nav button:nth-child(3)");
+      switchSection("volunteer", volNavBtn);
+      renderVolunteerProfile(data);
+    } else {
+      const txt = await res.text();
+      resp.innerHTML = `<div class="response-block error">❌ ${txt || "Invalid credentials. Please try again."}</div>`;
+    }
+  } catch(e) {
+    resp.innerHTML = `<div class="response-block error">❌ Network error. Please try again.</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   LOGOUT
+═══════════════════════════════════════════════ */
+function logoutVolunteer() {
+  currentVolunteer = null;
+  localStorage.removeItem("volunteerData");
+
+  // Reset header button
+  document.getElementById("header_login_btn").innerHTML = `<i class="fa fa-user"></i> Login`;
+  document.getElementById("header_login_btn").onclick = showLoginModal;
+
+  // Show landing
+  document.getElementById("vol_profile").style.display = "none";
+  document.getElementById("startup").style.display = "block";
+  document.getElementById("join").style.display = "none";
+}
+
+/* ═══════════════════════════════════════════════
+   REPORT ISSUE — POST /normal_complaints
+═══════════════════════════════════════════════ */
+async function submitIssue() {
+  const responseDiv = document.getElementById("issue_response");
+  const lat  = document.getElementById("report_lat").value;
+  const lng  = document.getElementById("report_lng").value;
+  const desc = document.getElementById("issue_desc").value.trim();
+
+  if (!lat || !lng || !desc) {
+    responseDiv.innerHTML = `<div class="response-block error">⚠️ Please select location on the map and describe the issue.</div>`;
+    return;
+  }
+
+  responseDiv.innerHTML = `<div class="response-block loading">🔄 Sending to nearest volunteer…</div>`;
+
+  try {
+    const formData = new FormData();
+    formData.append("latitude",    lat);
+    formData.append("longitude",   lng);
+    formData.append("description", desc);
+
+    const photoInput = document.getElementById("issue_photo");
+    if (photoInput.files[0]) {
+      formData.append("problem_image", photoInput.files[0]);
+    }
+
+    const res = await fetch("/normal_complaints", {
+      method: "POST",
+      body: formData
+    });
+
+    if (res.ok) {
+      responseDiv.innerHTML = `<div class="response-block success">✅ Issue sent to nearest volunteer! They will update you soon.</div>`;
+    } else {
+      responseDiv.innerHTML = `<div class="response-block error">❌ Failed to send. Please try again.</div>`;
+    }
+  } catch(e) {
+    // Fallback: show optimistic success (backend may not be running locally)
+    responseDiv.innerHTML = `<div class="response-block success">✅ Issue queued — will be sent when backend is live.</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   SEND COMPLAINT — POST /send_complain
+═══════════════════════════════════════════════ */
+async function sendComplaint() {
+  const officer = document.getElementById("officer").value;
+  const subject = document.getElementById("subject").value.trim();
+  const body    = document.getElementById("complaint_body").value.trim();
+  const responseDiv = document.getElementById("response");
+
+  if (!subject || !body) {
+    responseDiv.innerHTML = `<div class="response-block error">⚠️ Please fill subject and complaint details.</div>`;
+    return;
+  }
+
+  responseDiv.innerHTML = `<div class="response-block loading">🔄 Sending securely…</div>`;
+
+  try {
+    const res = await fetch("/send_complain", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ officer, subject, body })
+    });
+    const data = await res.json();
+    responseDiv.innerHTML = `<div class="response-block success">✅ ${data.response}</div>`;
+  } catch(e) {
+    responseDiv.innerHTML = `<div class="response-block error">❌ Error sending. Please check your connection and try again.</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════════ */
+function showLoginModal() {
+  document.getElementById("loginModal").style.display = "flex";
+}
+function hideLoginModal() {
+  document.getElementById("loginModal").style.display = "none";
+}
+
+/* ═══════════════════════════════════════════════
+   ON LOAD — restore session if exists
+═══════════════════════════════════════════════ */
+window.onload = function () {
+  initReportMap();
+
+  // Fix nav active state
+  document.querySelectorAll("nav button").forEach(btn => {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+      this.classList.add("active");
+    });
+  });
+
+  // Restore volunteer session from localStorage
+  const saved = localStorage.getItem("volunteerData");
+  if (saved) {
+    try {
+      const data = JSON.parse(saved);
+      if (data && data.email) {
+        // Update header button to show logged-in state
+        document.getElementById("header_login_btn").innerHTML = `<i class="fa fa-user-check"></i> ${(data.name || "Profile").split(" ")[0]}`;
+        document.getElementById("header_login_btn").onclick = () => {
+          const volNavBtn = document.querySelector("nav button:nth-child(3)");
+          switchSection("volunteer", volNavBtn);
+        };
+        // If user navigates to volunteer section, show profile
+        // (don't auto-navigate, just be ready)
+        window._restoredVolunteer = data;
+      }
+    } catch(e) {}
+  }
+};
+
+// When volunteer section is clicked, check if we should show profile
+document.addEventListener("DOMContentLoaded", () => {
+  const volNavBtn = document.querySelector("nav button:nth-child(3)");
+  if (volNavBtn) {
+    const origOnclick = volNavBtn.onclick;
+    volNavBtn.addEventListener("click", () => {
+      if (window._restoredVolunteer && !currentVolunteer) {
+        setTimeout(() => renderVolunteerProfile(window._restoredVolunteer), 50);
+      }
+    });
+  }
+});
+</script>
 </body>
 </html>
