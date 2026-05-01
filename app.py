@@ -68,7 +68,7 @@ def new_volunteer():
     if photo_file:
         files["photo"] = (photo_file.filename, photo_file.read(), photo_file.content_type)
 
-    response = requests.post(api_uri, params=params, files=files, timeout=1200)
+    response = requests.post(api_uri, data=params, files=files, timeout=1200)
     return jsonify(response.json())
 
 
