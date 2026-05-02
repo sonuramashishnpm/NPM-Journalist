@@ -1,3 +1,5 @@
+"""Deployed at Huggingface """
+
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from supabase import create_client
