@@ -1,0 +1,6 @@
+fastapi
+supabase
+npmai
+uvicorn
+uuid
+python-multipart
