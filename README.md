@@ -59,46 +59,11 @@ NPM Journalist started as a simple anonymous complaint sender to government offi
 
 ---
 
-## 🚀 How v2 Works — Full Pipeline
+## 🚀 How NPM Journalist whole pipeline works:-
 
-    CITIZEN
-       |
-       |  uploads photo + marks location on map + writes description
-       ↓
-    FLASK — npmjournalist.onrender.com
-       |
-       |  forwards as multipart/form-data
-       ↓
-    FASTAPI CORE — sonuramashishnpm-npm-journalist.hf.space
-       |
-       |  queries all volunteer locations from Supabase
-       ↓
-    OLA MAPS DISTANCE MATRIX API
-       |
-       |  calculates driving distance to every volunteer
-       |  picks the closest one
-       ↓
-    SUPABASE STORAGE
-       |
-       |  uploads complaint photo
-       |  generates public URL
-       ↓
-    SUPABASE DATABASE
-       |
-       |  inserts complaint linked to nearest volunteer email
-       ↓
-    VOLUNTEER DASHBOARD
-       |
-       |  volunteer logs in → sees complaint in My Reports tab
-       ↓
-    PROBLEM GETS SOLVED
+<img width="1442" height="2040" alt="image" src="https://github.com/user-attachments/assets/46fb01fb-ad1f-4b6d-8cc6-081198626302" />
 
 ---
-
-## How NPM Journalist whole pipeline works:-
-
-[![NPM Journalist Pipeline](<img width="1442" height="2040" alt="image" src="https://github.com/user-attachments/assets/46fb01fb-ad1f-4b6d-8cc6-081198626302" />)]
-
 
 ## 🎯 Three Ways to Use NPM Journalist v2
 
