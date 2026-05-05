@@ -95,6 +95,11 @@ NPM Journalist started as a simple anonymous complaint sender to government offi
 
 ---
 
+## How NPM Journalist whole pipeline works:-
+
+[![NPM Journalist Pipeline](<img width="1442" height="2040" alt="image" src="https://github.com/user-attachments/assets/46fb01fb-ad1f-4b6d-8cc6-081198626302" />)]
+
+
 ## 🎯 Three Ways to Use NPM Journalist v2
 
 ### 📸 1 — Report a Local Problem
